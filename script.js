@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzb77NHuB3UMjMCl6gcJo40nXC4ff-enON32mEY19G9rXa6nGArdEhYFPGcv2d25VNQGQ/exec"; // Google Apps Script のデプロイ URL に変更
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyjC45zrbsnixYMf1NpS5AWPO2iE0txFeyCbYc_jsYgWuIC58uMbF5e0TccWEWMuAWl/exec"; // Google Apps Script のデプロイ URL に変更
 
 let map;
 let hospitals = [];
@@ -60,22 +60,33 @@ function fetchHospitalData() {
     .catch(error => console.error("病院データ取得エラー:", error));
 }
 
-// 病院のマーカーをプロット（標準の Marker を使用）
+// AdvancedMarkerElement を用いて病院マーカーをプロット
 function createHospitalMarker(hospital) {
-  const position = { lat: parseFloat(hospital.lat), lng: parseFloat(hospital.lng) };
+  // 位置情報の作成
+  const position = new google.maps.LatLng(parseFloat(hospital.lat), parseFloat(hospital.lng));
 
-  const marker = new google.maps.Marker({
-    position: position,
+  // マーカー用のカスタム DOM 要素を生成（スタイルは CSS で調整可能）
+  const markerContent = document.createElement("div");
+  markerContent.className = "advanced-marker";
+  markerContent.innerText = hospital.name;
+
+  // AdvancedMarkerElement の作成
+  const marker = new google.maps.marker.AdvancedMarkerElement({
     map: map,
-    title: hospital.name
+    position: position,
+    content: markerContent
   });
 
+  // InfoWindow の作成
   const infoWindow = new google.maps.InfoWindow({
     content: `<b>${hospital.name}</b><br>${hospital.address}`
   });
 
-  marker.addListener("click", () => {
-    infoWindow.open(map, marker);
+  // AdvancedMarkerElement は MVCObject を継承していないため、
+  // InfoWindow のアンカーとして渡せず、クリック時に位置を設定して open() します
+  marker.addEventListener("gmp-click", () => {
+    infoWindow.setPosition(marker.getPosition());
+    infoWindow.open(map);
   });
 }
 
