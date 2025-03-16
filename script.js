@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz2UqhJDj96c9tLeQEM1apdfZsZR5ab4Y_E9GEr1C-gdtE_0x3UCmEkrpMw_ShkPuSwew/exec"; // GASのデプロイURL
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyf7nEIDPH20LCwUnIoxbqoAONQJ30Y7s7Hej0TYxFU76BRoKZRcRC78cOkYNY2YJi5lA/exec"; // GASのデプロイURL
 
 let map;
 let directionsService;
