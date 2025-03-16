@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>病院検索＆ルート案内</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onload="initMap()">
+    <div class="left-container">
+        <h2>病院検索＆ルート案内</h2>
+        <div class="search-box">
+            <input id="address" type="text" placeholder="住所・駅・施設名を入力" class="input">
+            <select id="mode" class="select">
+                <option value="DRIVING">車</option>
+                <option value="WALKING">徒歩</option>
+                <option value="BICYCLING">自転車</option>
+                <option value="TRANSIT">公共交通機関</option>
+            </select>
+            <input id="maxTime" type="number" min="1" placeholder="最大到達時間（分）" class="input">
+            <button id="search" class="button" onclick="startSearch()">検索</button>
+        </div>
+        <h2>条件に一致する病院リスト</h2>
+        <ul id="hospital-list" class="hospital-list"></ul>
+    </div>
+
+    <div class="right-container">
+        <div id="map"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
