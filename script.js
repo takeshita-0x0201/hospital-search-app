@@ -1,5 +1,5 @@
 const API_KEY = "AIzaSyBMpuPyp44-V8JgrHyLgeO-tFeQBoUWvfQ"; // ここに正しいAPIキーを入れる
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxr3UDyByEDwPRNeTsq8dSWeGJX7pjqbMU6pFOLyZKVtdvdby9Apk2tE6treARb20E8qQ/exec"; // GASのWebアプリURL
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxiyT63xD4llbY5OAaJmAwW-XAEWhR6Fzj2hYqw4QMtd6PoMTI7c4JTl9qAMxiRHQGU/exec"; // GASのWebアプリURL
 
 let map, directionsService, directionsRenderer, hospitals = [];
 
