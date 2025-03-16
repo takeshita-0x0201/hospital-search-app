@@ -36,7 +36,7 @@ function initMap() {
 
 // 📌 GAS から病院データを取得
 function fetchHospitalData() {
-    fetch(GAS_URL)
+    fetch(`${GAS_URL}?key=AIzaSyBMpuPyp44-V8JgrHyLgeO-tFeQBoUWvfQ`)
         .then(response => response.json())
         .then(data => {
             if (!Array.isArray(data) || data.length === 0) {
