@@ -42,11 +42,12 @@ function fetchHospitalData() {
 // ** 病院のマーカーを地図上に表示 **
 function placeHospitalMarkers() {
     hospitals.forEach(hospital => {
-        let marker = new google.maps.Marker({
+        let marker = new google.maps.marker.AdvancedMarkerElement({
             position: { lat: hospital.lat, lng: hospital.lng },
             map: map,
             title: hospital.name
         });
+
 
         let infoWindow = new google.maps.InfoWindow({
             content: `<b>${hospital.name}</b><br>${hospital.address}`
