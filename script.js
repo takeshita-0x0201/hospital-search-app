@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyiDxazF6PgyiDeghSQz1SQ9sfelXDOUjDiPy5tB2pJK94Ec2FugWByky25n8Sn_CVYjw/exec"; // Google Apps Script のデプロイ URL に変更
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwhiLGdqc10QEdwJ7-gOlkDkS9Z5AGNa0ntRYqLqzOBNU1g5QQTikJardjpVz1oaFCbjQ/exec"; // Google Apps Script のデプロイ URL に変更
 
 let map;
 let hospitals = [];
