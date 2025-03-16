@@ -1,9 +1,7 @@
 let map;
 let sessionToken;  // Autocomplete用のセッショントークン
 
-// スクリプト内に直接定義する病院情報
-// ※ 表では「病院名, 診療科, 住所, 緯度, 経度」となっていますが、実際のマップ表示のため
-//    緯度(lat)は35～、経度(lng)は139～となるよう、値の位置を入れ替えています。
+// スクリプト内に直接定義する病院情報（病院名、診療科、住所、緯度、経度）
 const hospitals = [
   {
     name: "川崎市立井田病院",
@@ -189,14 +187,29 @@ function initMap() {
   });
 }
 
-// AdvancedMarkerElement を用いて病院マーカーをプロット
+// AdvancedMarkerElement を用いて病院マーカーをプロット（ピン画像とラベルを表示）
 function createHospitalMarker(hospital) {
   const position = new google.maps.LatLng(hospital.lat, hospital.lng);
 
-  // カスタムDOM要素としてマーカー内容を定義（CSSでスタイル調整可）
+  // カスタムDOM要素としてマーカー内容を定義
   const markerContent = document.createElement("div");
   markerContent.className = "advanced-marker";
-  markerContent.innerText = hospital.name;
+
+  // ピン画像を追加（標準のピンアイコン）
+  const pinImg = document.createElement("img");
+  pinImg.src = "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png";
+  pinImg.style.width = "30px";
+  pinImg.style.height = "30px";
+
+  // 病院名のラベルを追加
+  const label = document.createElement("div");
+  label.innerText = hospital.name;
+  label.style.fontSize = "12px";
+  label.style.color = "black";
+
+  // DOM要素にピン画像とラベルを追加
+  markerContent.appendChild(pinImg);
+  markerContent.appendChild(label);
 
   const marker = new google.maps.marker.AdvancedMarkerElement({
     map: map,
