@@ -1,50 +1,41 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwXn2aJj3S86yWkf_8HJCuzQaAKnTeVItuLF0MZ74-J6_-DQHt1ATEJur_jPzy7zk0ugw/exec"; // GASのデプロイURL
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwXn2aJj3S86yWkf_8HJCuzQaAKnTeVItuLF0MZ74-J6_-DQHt1ATEJur_jPzy7zk0ugw/exec"; // ← Google Apps Script のデプロイ URL に変更
 
 let map;
-let directionsService;
-let directionsRenderer;
 let hospitals = [];
 
 function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 35.466069, lng: 139.622619 },
         zoom: 12,
-        mapId: "3378829b499b78cb" // 実際の `Map ID` を指定
+        mapId: "3378829b499b78cb" // `mapId` を設定
     });
-
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({ map });
 
     fetchHospitalData();
 
-    // 📌 住所 & 施設名を対象にオートコンプリート
+    // 住所オートコンプリート
     const input = document.getElementById("address");
-    const autocomplete = new google.maps.places.Autocomplete(input, {
-        types: ["geocode", "establishment"] // 住所 & 施設
-    });
-    autocomplete.setFields(["geometry", "formatted_address", "place_id"]);
+    const autocomplete = new google.maps.places.Autocomplete(input);
+    autocomplete.setFields(["geometry", "formatted_address"]);
 
     autocomplete.addListener("place_changed", function () {
         const place = autocomplete.getPlace();
         if (!place.geometry) {
-            alert("有効な住所または施設を選択してください");
+            alert("有効な住所を選択してください");
             return;
         }
         searchHospitals(place.geometry.location);
     });
 }
 
-// 📌 GAS から病院データを取得
+// 📌 スプレッドシートから病院データを取得
 function fetchHospitalData() {
-    fetch(`${GAS_URL}?key=AIzaSyBMpuPyp44-V8JgrHyLgeO-tFeQBoUWvfQ`)
+    fetch(GAS_URL)
         .then(response => response.json())
         .then(data => {
-            if (!Array.isArray(data) || data.length === 0) {
-                throw new Error("病院データが取得できませんでした");
+            if (!Array.isArray(data)) {
+                throw new Error("病院データが正しく取得できませんでした");
             }
             hospitals = data;
-            console.log("取得した病院データ:", hospitals);
-
             hospitals.forEach(hospital => {
                 createHospitalMarker(hospital);
             });
@@ -52,18 +43,13 @@ function fetchHospitalData() {
         .catch(error => console.error("病院データ取得エラー:", error));
 }
 
-// 📌 `AdvancedMarkerElement` を使用して病院マーカーを作成
+// 📌 病院のマーカーをプロット
 function createHospitalMarker(hospital) {
-    if (!hospital.lat || !hospital.lng) {
-        console.error("病院データが不完全です:", hospital);
-        return;
-    }
-
     const position = { lat: parseFloat(hospital.lat), lng: parseFloat(hospital.lng) };
 
     const marker = new google.maps.marker.AdvancedMarkerElement({
-        position,
-        map,
+        position: position,
+        map: map,
         title: hospital.name
     });
 
@@ -72,53 +58,64 @@ function createHospitalMarker(hospital) {
     });
 
     marker.addEventListener("gmp-click", () => {
-    infoWindow.open(map, marker);
+        infoWindow.open(map, marker);
     });
-
 }
 
-// 📌 住所 & 施設名で病院を検索
+// 📌 病院検索処理
 function searchHospitals(origin) {
     let mode = document.getElementById("mode").value;
+    let maxTime = parseInt(document.getElementById("maxTime").value);
 
-    if (!hospitals.length) {
-        alert("病院データがまだ読み込まれていません");
+    if (isNaN(maxTime)) {
+        alert("最大到達時間を入力してください");
         return;
     }
 
-    let nearestHospital = hospitals[0];
-    let minDistance = Infinity;
+    let destinations = hospitals.map(h => new google.maps.LatLng(h.lat, h.lng));
+    let service = new google.maps.DistanceMatrixService();
 
-    hospitals.forEach(hospital => {
-        let distance = google.maps.geometry.spherical.computeDistanceBetween(
-            origin,
-            new google.maps.LatLng(hospital.lat, hospital.lng)
-        );
+    service.getDistanceMatrix(
+        {
+            origins: [origin],
+            destinations: destinations,
+            travelMode: mode.toUpperCase()
+        },
+        function (response, status) {
+            if (status !== "OK") {
+                alert("距離情報の取得に失敗しました: " + status);
+                return;
+            }
 
-        if (distance < minDistance) {
-            minDistance = distance;
-            nearestHospital = hospital;
+            let results = response.rows[0].elements;
+            let filteredHospitals = [];
+
+            for (let i = 0; i < results.length; i++) {
+                let durationValue = results[i].duration ? results[i].duration.value / 60 : Infinity;
+
+                if (durationValue <= maxTime) {
+                    filteredHospitals.push(hospitals[i]);
+                }
+            }
+
+            displaySearchResults(filteredHospitals);
         }
-    });
-
-    document.getElementById("results").innerHTML = `最も近い病院: <b>${nearestHospital.name}</b> (${(minDistance / 1000).toFixed(2)} km)`;
-
-    showRoute(origin, nearestHospital, mode);
+    );
 }
 
-// 📌 ルートを表示
-function showRoute(origin, hospital, mode) {
-    let request = {
-        origin: origin,
-        destination: new google.maps.LatLng(hospital.lat, hospital.lng),
-        travelMode: mode
-    };
+// 📌 検索結果を表示
+function displaySearchResults(hospitals) {
+    let resultsContainer = document.getElementById("results");
+    resultsContainer.innerHTML = "<h3>検索結果</h3>";
 
-    directionsService.route(request, function (result, status) {
-        if (status === "OK") {
-            directionsRenderer.setDirections(result);
-        } else {
-            alert("ルート検索に失敗しました: " + status);
-        }
+    if (hospitals.length === 0) {
+        resultsContainer.innerHTML += "<p>該当する病院が見つかりませんでした。</p>";
+        return;
+    }
+
+    hospitals.forEach(hospital => {
+        let div = document.createElement("div");
+        div.innerHTML = `<b>${hospital.name}</b> (${hospital.address})`;
+        resultsContainer.appendChild(div);
     });
 }
