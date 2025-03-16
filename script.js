@@ -22,11 +22,12 @@ function fetchHospitalData() {
             hospitals = data;
             console.log("病院データ取得:", hospitals);
             hospitals.forEach(hospital => {
-                let marker = new google.maps.Marker({
+                const marker = new google.maps.marker.AdvancedMarkerElement({
                     position: { lat: hospital.lat, lng: hospital.lng },
                     map: map,
                     title: hospital.name
                 });
+
 
                 let infoWindow = new google.maps.InfoWindow({
                     content: `<b>${hospital.name}</b><br>${hospital.address}`
