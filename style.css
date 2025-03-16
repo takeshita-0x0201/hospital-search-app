@@ -1,41 +1,110 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f7f7f7;
+/* 全体のレイアウト */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
 }
+
+/* コンテナ：サイドバーと地図を横並びに配置 */
 .container {
-    display: flex;
-    height: 100vh;
+  display: flex;
+  height: 100%;
 }
+
+/* サイドバーのスタイル */
 .sidebar {
-    width: 30%;
-    background: #fff;
-    padding: 20px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    overflow-y: auto;
+  width: 300px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  box-sizing: border-box;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
 }
-#map {
-    width: 70%;
-    height: 100vh;
+
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 20px;
+  color: #333;
 }
+
+/* 検索ボックス */
 .search-box {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  margin-bottom: 20px;
 }
-.input, .select {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+
+.search-box .input,
+.search-box .select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 3px;
 }
-.button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
+
+.search-box .button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
 }
-.button:hover {
-    background-color: #0056b3;
+
+.search-box .button:hover {
+  background-color: #357ae8;
+}
+
+/* 検索結果 */
+#results {
+  margin-top: 20px;
+}
+
+#results h3 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+#results ul {
+  list-style: none;
+  padding: 0;
+}
+
+#results ul li {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
+/* 地図領域 */
+#map {
+  flex: 1;
+  height: 100%;
+}
+
+/* AdvancedMarkerElement 用のカスタムマーカー */
+.advanced-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ピン画像のスタイル */
+.advanced-marker img {
+  width: 30px;
+  height: 30px;
+}
+
+/* ラベルのスタイル */
+.advanced-marker div {
+  font-size: 12px;
+  color: black;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 2px 4px;
+  border-radius: 2px;
+  margin-top: 2px;
+  text-align: center;
 }
