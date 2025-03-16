@@ -1,5 +1,5 @@
 const API_KEY = "AIzaSyBMpuPyp44-V8JgrHyLgeO-tFeQBoUWvfQ"; // config.js で定義
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxiyT63xD4llbY5OAaJmAwW-XAEWhR6Fzj2hYqw4QMtd6PoMTI7c4JTl9qAMxiRHQGU/exec"; // Google Apps Script のデプロイ URL
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxv7nzbpy6LcRljgSdi6umaCGOjNlmyncDInFx19JZrW-2Mt6JIepifvZCmzaGiOKDFSw/exec"; // Google Apps Script のデプロイ URL
 
 let map;
 let directionsService;
