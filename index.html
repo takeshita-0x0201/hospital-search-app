@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBMpuPyp44-V8JgrHyLgeO-tFeQBoUWvfQ&map_ids=3378829b499b78cb&libraries=places&callback=initMap" async defer></script>
+    <title>病院検索＆ルート案内</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&map_ids=YOUR_MAP_ID&libraries=places&callback=initMap" async defer></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,12 +22,15 @@
                 <input id="maxTime" type="number" min="1" placeholder="最大到達時間（分）" class="input">
                 <button id="search" class="button">検索</button>
             </div>
-            <div id="results"></div>
+            <div id="results">
+                <h3>検索結果</h3>
+                <ul id="hospitalList"></ul> <!-- 病院リスト用のエリア -->
+            </div>
         </div>
         <div id="map"></div>
     </div>
 
-    <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
+
