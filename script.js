@@ -71,9 +71,10 @@ function createHospitalMarker(hospital) {
         content: `<b>${hospital.name}</b><br>${hospital.address}`
     });
 
-    marker.addListener("click", () => {
-        infoWindow.open(map, marker);
+    marker.addEventListener("gmp-click", () => {
+    infoWindow.open(map, marker);
     });
+
 }
 
 // 📌 住所 & 施設名で病院を検索
