@@ -1,110 +1,220 @@
-/* 全体のレイアウト */
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: Arial, sans-serif;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* コンテナ：サイドバーと地図を横並びに配置 */
+body {
+    background-color: #f5f7fa;
+}
+
 .container {
-  display: flex;
-  height: 100%;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-/* サイドバーのスタイル */
-.sidebar {
-  width: 300px;
-  background-color: #f9f9f9;
-  padding: 20px;
-  box-sizing: border-box;
-  border-right: 1px solid #ddd;
-  overflow-y: auto;
+header {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.sidebar h2 {
-  margin-top: 0;
-  font-size: 20px;
-  color: #333;
+h1 {
+    color: #2c3e50;
+    font-size: 28px;
 }
 
-/* 検索ボックス */
-.search-box {
-  margin-bottom: 20px;
+.search-panel {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
 }
 
-.search-box .input,
-.search-box .select {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 3px;
+.input-group {
+    flex: 1;
+    min-width: 200px;
 }
 
-.search-box .button {
-  width: 100%;
-  padding: 10px;
-  background-color: #4285f4;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #34495e;
+    font-weight: 500;
 }
 
-.search-box .button:hover {
-  background-color: #357ae8;
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
 }
 
-/* 検索結果 */
-#results {
-  margin-top: 20px;
+input:focus, select:focus {
+    outline: none;
+    border-color: #3498db;
 }
 
-#results h3 {
-  margin-top: 0;
-  font-size: 18px;
-  color: #333;
+button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
 }
 
-#results ul {
-  list-style: none;
-  padding: 0;
+button:hover {
+    background-color: #2980b9;
 }
 
-#results ul li {
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #555;
+.content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
-/* 地図領域 */
 #map {
-  flex: 1;
-  height: 100%;
+    flex: 2;
+    min-width: 300px;
+    height: 500px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* AdvancedMarkerElement 用のカスタムマーカー */
-.advanced-marker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.results-container {
+    flex: 1;
+    min-width: 300px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* ピン画像のスタイル */
-.advanced-marker img {
-  width: 30px;
-  height: 30px;
+h2 {
+    color: #2c3e50;
+    font-size: 20px;
+    margin-bottom: 15px;
 }
 
-/* ラベルのスタイル */
-.advanced-marker div {
-  font-size: 12px;
-  color: black;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 2px 4px;
-  border-radius: 2px;
-  margin-top: 2px;
-  text-align: center;
+#results {
+    max-height: 440px;
+    overflow-y: auto;
+}
+
+.hospital-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.hospital-item:hover {
+    background-color: #f5f7fa;
+}
+
+.hospital-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.hospital-address {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.hospital-time {
+    font-size: 13px;
+    color: #2980b9;
+    margin-top: 5px;
+}
+
+.no-results {
+    color: #7f8c8d;
+    font-style: italic;
+    padding: 20px 0;
+    text-align: center;
+}
+
+/* マーカースタイル */
+.marker {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.marker-pin {
+    width: 24px;
+    height: 24px;
+    background-color: #3498db;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.marker-label {
+    margin-top: 4px;
+    padding: 2px 4px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 情報ウィンドウスタイル */
+.info-window {
+    padding: 5px;
+}
+
+.info-window h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+.info-window p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+/* ローディング表示 */
+.loading {
+    padding: 20px;
+    text-align: center;
+    color: #7f8c8d;
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 768px) {
+    .search-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .input-group {
+        width: 100%;
+    }
+    
+    #map, .results-container {
+        flex: 1 1 100%;
+    }
+    
+    #map {
+        height: 350px;
+    }
 }
