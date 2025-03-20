@@ -1,36 +1,55 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>病院検索＆ルート案内</title>
-  <!-- API キーと必要なライブラリ（places, marker）を読み込み -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqh5zuCekqccxBqo9P48SIvPVVoUHl8uw&map_ids=3378829b499b78cb&libraries=places,marker&callback=initMap"></script>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>病院検索マップシステム</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="sidebar">
-      <h2>病院検索＆ルート案内</h2>
-      <div class="search-box">
-        <input id="address" type="text" placeholder="住所または最寄駅を入力" class="input">
-        <select id="mode" class="select">
-          <option value="DRIVING">車</option>
-          <option value="WALKING">徒歩</option>
-          <option value="BICYCLING">自転車</option>
-          <option value="TRANSIT">公共交通機関</option>
-        </select>
-        <input id="maxTime" type="number" min="1" placeholder="最大到達時間（分）" class="input">
-        <button id="search" class="button">検索</button>
-      </div>
-      <div id="results">
-        <h3>検索結果</h3>
-        <ul id="hospitalList"></ul>
-      </div>
+    <div class="container">
+        <header>
+            <h1>病院検索マップシステム</h1>
+        </header>
+        
+        <div class="search-panel">
+            <div class="input-group">
+                <label for="address">住所または駅名:</label>
+                <input type="text" id="address" placeholder="住所または駅名を入力">
+            </div>
+            
+            <div class="input-group">
+                <label for="mode">移動手段:</label>
+                <select id="mode">
+                    <option value="DRIVING">車</option>
+                    <option value="TRANSIT">公共交通機関</option>
+                    <option value="WALKING">徒歩</option>
+                    <option value="BICYCLING">自転車</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="maxTime">最大到達時間 (分):</label>
+                <input type="number" id="maxTime" min="5" max="120" value="30">
+            </div>
+            
+            <button id="searchBtn">検索</button>
+        </div>
+        
+        <div class="content">
+            <div id="map"></div>
+            
+            <div class="results-container">
+                <h2>検索結果</h2>
+                <div id="results"></div>
+            </div>
+        </div>
     </div>
-    <div id="map"></div>
-  </div>
 
-  <script src="script.js"></script>
+    <script src="script.js"></script>
+    <!-- Google Maps APIスクリプトは最後に読み込む -->
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&v=weekly&callback=initMap">
+    </script>
 </body>
 </html>
