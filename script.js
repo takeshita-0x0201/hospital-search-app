@@ -1,286 +1,320 @@
-let map;
-let sessionToken;  // Autocomplete用のセッショントークン
-
-// スクリプト内に直接定義する病院情報（病院名、診療科、住所、緯度、経度）
+// 病院データ（緯度・経度・名前・診療科・住所）
 const hospitals = [
-  {
-    name: "川崎市立井田病院",
-    department: "内科、アレルギー科、血液内科、リウマチ科、外科、精神科、脳神経外科、呼吸器外科、消化器外科、腎臓内科、心臓血管外科、整形外科、形成外科、皮膚科、泌尿器科、婦人科、眼科、耳鼻咽喉科、リハビリテーション科、一般歯科、歯科口腔外科、麻酔科、乳腺外科、呼吸器内科、循環器内科、緩和ケア内科、腫瘍内科、感染症内科、消化器内科、肝臓内科、糖尿病内科、人工透析内科、脳神経内科、放射線診断科、放射線",
-    address: "神奈川県川崎市中原区井田2丁目27-1",
-    lat: 35.55917,
-    lng: 139.64122
-  },
-  {
-    name: "菊名記念病院",
-    department: "内科、アレルギー科、血液内科、外科、精神科、神経内科、脳神経外科、腎臓内科、心臓血管外科、整形外科、皮膚科、泌尿器科、婦人科、リハビリテーション科、放射線科、麻酔科、乳腺外科、呼吸器内科、循環器内科、消化器内科、肝臓内科、内視鏡内科、糖尿病内科、膠原病内科、美容皮膚科、総合診療科、病理診断科",
-    address: "神奈川県横浜市港北区菊名4丁目4-27",
-    lat: 35.50938,
-    lng: 139.63454
-  },
-  {
-    name: "横浜労災病院",
-    department: "内科、血液内科、リウマチ科、外科、心療内科、精神科、脳神経外科、呼吸器外科、消化器外科、腎臓内科、心臓血管外科、小児科、小児外科、整形外科、形成外科、皮膚科、泌尿器科、産婦人科、眼科、耳鼻咽喉科、リハビリテーション科、一般歯科、歯科口腔外科、麻酔科、乳腺外科、呼吸器内科、循環器内科、消化器内科、糖尿病内科、内分泌内科、代謝内科、膠原病内科、脳神経内科、放射線診断科、放射線治療科、病理診断科",
-    address: "神奈川県横浜市港北区小机町3211",
-    lat: 35.51088,
-    lng: 139.61101
-  },
-  {
-    name: "横浜第一病院",
-    department: "内科、神経内科、腎臓内科、整形外科、皮膚科、泌尿器科、呼吸器内科、循環器内科、消化器内科、糖尿病内科、人工透析内科",
-    address: "神奈川県横浜市西区高島2丁目5-15",
-    lat: 35.46173,
-    lng: 139.62265
-  },
-  {
-    name: "川崎幸病院",
-    department: "内科、外科、脳神経外科、呼吸器外科、消化器外科、腎臓内科、心臓血管外科、整形外科、形成外科、泌尿器科、婦人科、リハビリテーション科、麻酔科、乳腺外科、循環器内科、消化器内科、糖尿病内科、代謝内科、人工透析内科、肛門外科、放射線診断科、放射線治療科、病理診断科、内視鏡外科",
-    address: "神奈川県川崎市幸区大宮町31-27",
-    lat: 35.52789,
-    lng: 139.6924
-  },
-  {
-    name: "亀田病院",
-    department: "内科、外科、神経内科、整形外科、皮膚科、泌尿器科、リハビリテーション科、放射線科、呼吸器内科、循環器内科、消化器内科、糖尿病内科、血管外科",
-    address: "神奈川県横浜市西区御所山町77",
-    lat: 35.45529,
-    lng: 139.623
-  },
-  {
-    name: "片倉病院",
-    department: "内科、リウマチ科、腎臓内科、循環器内科、消化器内科、糖尿病内科、内分泌内科、代謝内科、脳神経内科",
-    address: "神奈川県川崎市高津区新作4丁目11-16",
-    lat: 35.58687,
-    lng: 139.61935
-  },
-  {
-    name: "日本鋼管病院",
-    department: "内科、血液内科、外科、神経内科、脳神経外科、消化器外科、腎臓内科、小児科、整形外科、皮膚科、泌尿器科、婦人科、眼科、耳鼻咽喉科、リハビリテーション科、放射線科、歯科口腔外科、麻酔科、乳腺外科、呼吸器内科、循環器内科、消化器内科、肝臓内科、糖尿病内科、内分泌内科、肛門外科、血管外科、精神神経科、病理診断科",
-    address: "神奈川県川崎市川崎区鋼管通1丁目2-1",
-    lat: 35.5196,
-    lng: 139.71225
-  },
-  {
-    name: "聖隷横浜病院",
-    department: "内科、循環器科、呼吸器内科、消化器科、泌尿器科、外科、脳神経外科、小児科、整形外科、皮膚科、リハビリテーション科、放射線科、内分泌科、糖尿病内科、心臓血管外科、消化器外科、麻酔科",
-    address: "神奈川県横浜市保土ケ谷区岩井町215",
-    lat: 35.44231,
-    lng: 139.60487
-  },
-  {
-    name: "総合新川橋病院",
-    department: "内科、外科、脳神経外科、整形外科、形成外科、皮膚科、眼科、リハビリテーション科、放射線科、麻酔科、循環器内科、消化器内科、肝臓内科、糖尿病内科、代謝内科",
-    address: "神奈川県川崎市川崎区新川通1-15",
-    lat: 35.52676,
-    lng: 139.70311
-  },
-  {
-    name: "古川病院",
-    department: "内科、アレルギー科、外科、神経内科、小児科、整形外科、皮膚科、泌尿器科、婦人科、リハビリテーション科、循環器内科、消化器内科、糖尿病内科",
-    address: "神奈川県横浜市神奈川区子安通2丁目286",
-    lat: 35.48605,
-    lng: 139.65547
-  },
-  {
-    name: "市ケ尾病院",
-    department: "内科、アレルギー科、血液内科、外科、精神科、神経内科、脳神経外科、消化器外科、整形外科、形成外科、泌尿器科、リハビリテーション科、一般歯科、歯科口腔外科、乳腺外科、呼吸器内科、循環器内科、消化器内科、糖尿病内科、内分泌内科、代謝内科、脳神経内科",
-    address: "神奈川県横浜市青葉区市ｹ尾町23-1",
-    lat: 35.5485,
-    lng: 139.53949
-  },
-  {
-    name: "横浜保土ケ谷中央病院",
-    department: "内科、リウマチ科、外科、精神科、神経内科、脳神経外科、呼吸器科、消化器外科、消化器科、腎臓内科、循環器科、小児科、整形外科、皮膚科、泌尿器科、眼科、耳鼻咽喉科、リハビリテーション科、放射線科、歯科口腔外科、麻酔科、糖尿病内科、内分泌内科、代謝内科、膠原病内科、血管外科、総合診療科",
-    address: "神奈川県横浜市保土ケ谷区釜台町43-1",
-    lat: 35.47254,
-    lng: 139.58353
-  },
-  {
-    name: "ふれあい横浜ホスピタル",
-    department: "内科、外科、消化器外科、腎臓内科、心臓血管外科、小児科、整形外科、形成外科、美容外科、泌尿器科、産婦人科、リハビリテーション科、放射線科、一般歯科、麻酔科、乳腺外科、呼吸器内科、循環器内科、消化器内科、内視鏡内科、糖尿病内科、人工透析内科、内視鏡外科",
-    address: "神奈川県横浜市中区万代町2丁目3-3",
-    lat: 35.44228,
-    lng: 139.63562
-  },
-  {
-    name: "江田記念病院",
-    department: "内科、心療内科、精神科、整形外科、皮膚科、リハビリテーション科、循環器内科、消化器内科、糖尿病内科、脳神経内科",
-    address: "神奈川県横浜市青葉区あざみ野南1丁目1",
-    lat: 35.55984,
-    lng: 139.55339
-  },
-  {
-    name: "神奈川県立がんセンター",
-    department: "内科、血液内科、東洋医学科、精神科、脳神経外科、呼吸器外科、消化器外科、整形外科、形成外科、皮膚科、泌尿器科、婦人科、リハビリテーション科、歯科口腔外科、麻酔科、乳腺外科、呼吸器内科、循環器内科、緩和ケア内科、腫瘍内科、感染症内科、消化器内科、糖尿病内科、内分泌内科、内分泌外科、放射線診断科、放射線治療科、頭頸部外科、病理診断科",
-    address: "神奈川県横浜市旭区中尾2丁目3-2",
-    lat: 35.46832,
-    lng: 139.52473
-  },
-  {
-    name: "横浜中央病院",
-    department: "内科、外科、脳神経外科、呼吸器外科、消化器外科、腎臓内科、整形外科、皮膚科、泌尿器科、婦人科、眼科、リハビリテーション科、放射線科、歯科口腔外科、麻酔科、乳腺外科、呼吸器内科、循環器内科、消化器内科、肝臓内科、糖尿病内科、人工透析内科、肛門外科、血管外科、ペインクリニック内科、総合診療科、病理診断科",
-    address: "神奈川県横浜市中区山下町268",
-    lat: 35.44087,
-    lng: 139.6438
-  },
-  {
-    name: "新百合ヶ丘総合病院",
-    department: "糖尿病内科、内科、総合診療科、循環器内科、血液内科、消化器科、呼吸器内科、神経内科、脳神経外科、消化器外科、外科、乳腺外科、呼吸器外科、整形外科、形成外科、心臓血管外科、泌尿器科、小児科、産婦人科、産科、婦人科、皮膚科、小児外科、精神科、心療内科、眼科、耳鼻咽喉科、歯科口腔外科、リハビリテーション科、放射線科、麻酔科",
-    address: "神奈川県川崎市麻生区古沢字都古255",
-    lat: 35.60316,
-    lng: 139.49847
-  },
-  {
-    name: "AOI国際病院",
-    department: "内科、リウマチ科、外科、心療内科、精神科、神経内科、脳神経外科、呼吸器外科、消化器外科、腎臓内科、心臓血管外科、小児科、整形外科、形成外科、皮膚科、泌尿器科、婦人科、眼科、耳鼻咽喉科、リハビリテーション科、放射線科、一般歯科、歯科口腔外科、麻酔科、乳腺外科、呼吸器内科、循環器内科、消化器内科、糖尿病内科、代謝内科、人工透析内科、血管外科",
-    address: "神奈川県川崎市川崎区田町2丁目9-1",
-    lat: 35.53392,
-    lng: 139.74605
-  }
+    {
+        name: "横浜市立市民病院",
+        lat: 35.466069,
+        lng: 139.622619,
+        specialties: "内科, 外科, 小児科, 整形外科, 脳神経外科",
+        address: "神奈川県横浜市保土ケ谷区岡沢町56"
+    },
+    {
+        name: "聖マリアンナ医科大学病院",
+        lat: 35.587517,
+        lng: 139.550172,
+        specialties: "内科, 外科, 小児科, 産婦人科, 眼科, 耳鼻咽喉科",
+        address: "神奈川県川崎市宮前区菅生2-16-1"
+    },
+    {
+        name: "横浜市立大学附属病院",
+        lat: 35.335232,
+        lng: 139.648385,
+        specialties: "内科, 外科, 小児科, 整形外科, 皮膚科, 泌尿器科",
+        address: "神奈川県横浜市金沢区福浦3-9"
+    },
+    {
+        name: "済生会横浜市東部病院",
+        lat: 35.512651,
+        lng: 139.654535,
+        specialties: "内科, 外科, 小児科, 整形外科, 循環器内科",
+        address: "神奈川県横浜市鶴見区下末吉3-6-1"
+    },
+    {
+        name: "昭和大学藤が丘病院",
+        lat: 35.547049,
+        lng: 139.558107,
+        specialties: "内科, 外科, 小児科, 産婦人科, 眼科",
+        address: "神奈川県横浜市青葉区藤が丘1-30"
+    }
 ];
 
-function initMap() {
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 35.466069, lng: 139.622619 },
-    zoom: 12,
-    mapId: "3378829b499b78cb"
-  });
+// グローバル変数
+let map;
+let markers = [];
+let infoWindow;
+let autocomplete;
+let sessionToken;
+let geocoder;
+let distanceMatrixService;
 
-  // 各病院情報からマーカーを生成
-  hospitals.forEach(hospital => {
-    createHospitalMarker(hospital);
-  });
-
-  // セッショントークンの生成（ユーザー入力ごとに一意のトークンを利用）
-  sessionToken = new google.maps.places.AutocompleteSessionToken();
-
-  // 住所オートコンプリートの設定：セッショントークンを付与
-  const input = document.getElementById("address");
-  const autocomplete = new google.maps.places.Autocomplete(input, {
-    sessionToken: sessionToken
-  });
-  autocomplete.setFields(["geometry", "formatted_address"]);
-
-  autocomplete.addListener("place_changed", function () {
-    const place = autocomplete.getPlace();
-    if (!place.geometry) {
-      alert("有効な住所を選択してください");
-      return;
+// マップ初期化関数
+async function initMap() {
+    try {
+        // マップの初期化
+        const { Map } = await google.maps.importLibrary("maps");
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+        
+        map = new Map(document.getElementById("map"), {
+            center: { lat: 35.466069, lng: 139.622619 },
+            zoom: 12,
+            mapId: "3378829b499b78cb"
+        });
+        
+        // InfoWindowの初期化
+        infoWindow = new google.maps.InfoWindow();
+        
+        // Geocoderの初期化
+        geocoder = new google.maps.Geocoder();
+        
+        // Distance Matrix APIの初期化
+        distanceMatrixService = new google.maps.DistanceMatrixService();
+        
+        // 住所オートコンプリートの設定
+        setupAutocomplete();
+        
+        // 病院マーカーの作成
+        createHospitalMarkers();
+        
+        // 検索ボタンのイベントリスナー
+        document.getElementById("searchBtn").addEventListener("click", searchHospitals);
+    } catch (error) {
+        console.error("マップの初期化中にエラーが発生しました:", error);
+        alert("マップの読み込み中にエラーが発生しました。ページを再読み込みしてください。");
     }
-    searchHospitals(place.geometry.location);
-  });
-
-  // 検索ボタンのイベントリスナー：住所をジオコーディングして検索
-  document.getElementById("search").addEventListener("click", () => {
-    const address = document.getElementById("address").value;
-    if (!address) {
-      alert("住所または最寄駅を入力してください");
-      return;
-    }
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: address }, (results, status) => {
-      if (status === "OK" && results[0]) {
-        searchHospitals(results[0].geometry.location);
-      } else {
-        alert("有効な住所を入力してください");
-      }
-    });
-  });
 }
 
-// AdvancedMarkerElement を用いて病院マーカーをプロット（ピン画像とラベルを表示）
-function createHospitalMarker(hospital) {
-  const position = new google.maps.LatLng(hospital.lat, hospital.lng);
-
-  // カスタムDOM要素としてマーカー内容を定義
-  const markerContent = document.createElement("div");
-  markerContent.className = "advanced-marker";
-
-  // ピン画像を追加（標準のピンアイコン）
-  const pinImg = document.createElement("img");
-  pinImg.src = "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png";
-  pinImg.style.width = "30px";
-  pinImg.style.height = "30px";
-
-  // 病院名のラベルを追加
-  const label = document.createElement("div");
-  label.innerText = hospital.name;
-  label.style.fontSize = "12px";
-  label.style.color = "black";
-
-  // DOM要素にピン画像とラベルを追加
-  markerContent.appendChild(pinImg);
-  markerContent.appendChild(label);
-
-  const marker = new google.maps.marker.AdvancedMarkerElement({
-    map: map,
-    position: position,
-    content: markerContent
-  });
-
-  // InfoWindow の作成（病院名、診療科、住所を表示）
-  const infoWindow = new google.maps.InfoWindow({
-    content: `<b>${hospital.name}</b><br>${hospital.department}<br>${hospital.address}`
-  });
-
-  marker.addEventListener("gmp-click", () => {
-    infoWindow.setPosition(marker.getPosition());
-    infoWindow.open(map);
-  });
+// 住所オートコンプリートの設定
+function setupAutocomplete() {
+    try {
+        // セッショントークンの生成
+        sessionToken = new google.maps.places.AutocompleteSessionToken();
+        
+        // オートコンプリートの初期化
+        const addressInput = document.getElementById("address");
+        autocomplete = new google.maps.places.Autocomplete(addressInput, {
+            types: ["geocode", "establishment"],
+            sessionToken: sessionToken
+        });
+        
+        // 選択された場合のイベントリスナー
+        autocomplete.addListener("place_changed", function() {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) {
+                alert("入力された住所の詳細情報が取得できませんでした。別の住所を試してください。");
+                return;
+            }
+        });
+    } catch (error) {
+        console.error("オートコンプリートの設定中にエラーが発生しました:", error);
+    }
 }
 
-// 病院検索処理：Distance Matrix API により指定地点からの所要時間でフィルタリング
-function searchHospitals(origin) {
-  const mode = document.getElementById("mode").value;
-  const maxTime = parseInt(document.getElementById("maxTime").value);
-
-  if (isNaN(maxTime)) {
-    alert("最大到達時間を入力してください");
-    return;
-  }
-
-  const destinations = hospitals.map(h => new google.maps.LatLng(h.lat, h.lng));
-  const service = new google.maps.DistanceMatrixService();
-
-  service.getDistanceMatrix(
-    {
-      origins: [origin],
-      destinations: destinations,
-      travelMode: mode.toUpperCase()
-    },
-    function (response, status) {
-      if (status !== "OK") {
-        alert("距離情報の取得に失敗しました: " + status);
-        return;
-      }
-
-      const results = response.rows[0].elements;
-      const filteredHospitals = [];
-
-      for (let i = 0; i < results.length; i++) {
-        const durationValue = results[i].duration ? results[i].duration.value / 60 : Infinity;
-        if (durationValue <= maxTime) {
-          filteredHospitals.push(hospitals[i]);
+// 病院マーカーの作成
+async function createHospitalMarkers() {
+    try {
+        // マーカーを一旦クリア
+        clearMarkers();
+        
+        // マーカーライブラリを読み込み
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+        
+        // 病院データごとにマーカーを作成
+        for (const hospital of hospitals) {
+            // マーカーの作成
+            const marker = new AdvancedMarkerElement({
+                position: { lat: hospital.lat, lng: hospital.lng },
+                map: map,
+                title: hospital.name,
+                content: createMarkerElement(hospital.name)
+            });
+            
+            // マーカークリック時のイベント
+            marker.addListener("click", () => {
+                // 情報ウィンドウの内容
+                const content = `
+                    <div class="info-window">
+                        <h3>${hospital.name}</h3>
+                        <p><strong>診療科:</strong> ${hospital.specialties}</p>
+                        <p><strong>住所:</strong> ${hospital.address}</p>
+                    </div>
+                `;
+                
+                infoWindow.setContent(content);
+                infoWindow.setPosition({ lat: hospital.lat, lng: hospital.lng });
+                infoWindow.open(map);
+            });
+            
+            markers.push(marker);
         }
-      }
-
-      displaySearchResults(filteredHospitals);
+    } catch (error) {
+        console.error("病院マーカーの作成中にエラーが発生しました:", error);
     }
-  );
 }
 
-// 検索結果を表示
-function displaySearchResults(filteredHospitals) {
-  const resultsContainer = document.getElementById("results");
-  resultsContainer.innerHTML = "<h3>検索結果</h3>";
-
-  if (filteredHospitals.length === 0) {
-    resultsContainer.innerHTML += "<p>該当する病院が見つかりませんでした。</p>";
-    return;
-  }
-
-  filteredHospitals.forEach(hospital => {
-    const div = document.createElement("div");
-    div.innerHTML = `<b>${hospital.name}</b> (${hospital.address})`;
-    resultsContainer.appendChild(div);
-  });
+// マーカー用のカスタム要素を作成
+function createMarkerElement(title) {
+    const element = document.createElement("div");
+    element.className = "marker";
+    element.innerHTML = `
+        <div class="marker-pin"></div>
+        <div class="marker-label">${title}</div>
+    `;
+    return element;
 }
+
+// マーカーをクリア
+function clearMarkers() {
+    markers.forEach(marker => {
+        marker.map = null;
+    });
+    markers = [];
+}
+
+// 病院検索
+async function searchHospitals() {
+    const address = document.getElementById("address").value;
+    const mode = document.getElementById("mode").value;
+    const maxTime = parseInt(document.getElementById("maxTime").value);
+    
+    if (!address) {
+        alert("住所または駅名を入力してください。");
+        return;
+    }
+    
+    // 検索中の表示
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = '<div class="loading">検索中...</div>';
+    
+    try {
+        // 住所から緯度経度を取得
+        const geocodeResult = await new Promise((resolve, reject) => {
+            geocoder.geocode({ address: address }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    resolve(results[0]);
+                } else {
+                    reject(new Error("住所の緯度経度が取得できませんでした"));
+                }
+            });
+        });
+        
+        const origin = geocodeResult.geometry.location;
+        
+        // マップの中心を検索位置に移動
+        map.setCenter(origin);
+        
+        // マーカーライブラリを読み込み
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+        
+        // 検索元のマーカーを作成
+        const originMarker = new AdvancedMarkerElement({
+            position: origin,
+            map: map,
+            title: "検索位置",
+            content: createMarkerElement("検索位置")
+        });
+        
+        // 病院の位置情報を準備
+        const destinations = hospitals.map(hospital => {
+            return new google.maps.LatLng(hospital.lat, hospital.lng);
+        });
+        
+        // Distance Matrix APIで距離と時間を計算
+        calculateDistances(origin, destinations, mode, maxTime);
+        
+    } catch (error) {
+        console.error("検索処理中にエラーが発生しました:", error);
+        resultsDiv.innerHTML = '<div class="no-results">検索処理中にエラーが発生しました。もう一度お試しください。</div>';
+    }
+}
+
+// 距離と時間の計算
+function calculateDistances(origin, destinations, mode, maxTime) {
+    // Distance Matrix APIのリクエスト
+    distanceMatrixService.getDistanceMatrix({
+        origins: [origin],
+        destinations: destinations,
+        travelMode: google.maps.TravelMode[mode],
+        unitSystem: google.maps.UnitSystem.METRIC
+    }, (response, status) => {
+        if (status !== "OK") {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = '<div class="no-results">距離計算中にエラーが発生しました。後でもう一度お試しください。</div>';
+            console.error("Distance Matrix APIエラー:", status);
+            return;
+        }
+        
+        // 結果の処理とフィルタリング
+        processResults(response, maxTime);
+    });
+}
+
+// 結果の処理とフィルタリング
+function processResults(response, maxTime) {
+    const results = document.getElementById("results");
+    results.innerHTML = "";
+    
+    // 最大到達時間（秒に変換）
+    const maxTimeInSeconds = maxTime * 60;
+    
+    let filteredHospitals = [];
+    
+    // 各病院までの所要時間をチェック
+    if (response.rows[0] && response.rows[0].elements) {
+        response.rows[0].elements.forEach((element, index) => {
+            if (element.status === "OK") {
+                // 所要時間が最大到達時間以内かチェック
+                if (element.duration.value <= maxTimeInSeconds) {
+                    filteredHospitals.push({
+                        hospital: hospitals[index],
+                        duration: element.duration.text,
+                        durationValue: element.duration.value
+                    });
+                }
+            }
+        });
+    }
+    
+    // 所要時間でソート
+    filteredHospitals.sort((a, b) => a.durationValue - b.durationValue);
+    
+    // 結果を表示
+    if (filteredHospitals.length > 0) {
+        filteredHospitals.forEach(item => {
+            const hospitalElement = document.createElement("div");
+            hospitalElement.className = "hospital-item";
+            hospitalElement.innerHTML = `
+                <div class="hospital-name">${item.hospital.name}</div>
+                <div class="hospital-address">${item.hospital.address}</div>
+                <div class="hospital-time">所要時間: ${item.duration}</div>
+            `;
+            
+            // 病院項目のクリックイベント
+            hospitalElement.addEventListener("click", () => {
+                // マップをその病院の位置に移動
+                map.setCenter({ lat: item.hospital.lat, lng: item.hospital.lng });
+                map.setZoom(15);
+                
+                // 情報ウィンドウを開く
+                const content = `
+                    <div class="info-window">
+                        <h3>${item.hospital.name}</h3>
+                        <p><strong>診療科:</strong> ${item.hospital.specialties}</p>
+                        <p><strong>住所:</strong> ${item.hospital.address}</p>
+                        <p><strong>所要時間:</strong> ${item.duration}</p>
+                    </div>
+                `;
+                
+                infoWindow.setContent(content);
+                infoWindow.setPosition({ lat: item.hospital.lat, lng: item.hospital.lng });
+                infoWindow.open(map);
+            });
+            
+            results.appendChild(hospitalElement);
+        });
+    } else {
+        // 該当する病院がない場合
+        results.innerHTML = '<div class="no-results">該当する病院が見つかりませんでした。</div>';
+    }
+}
+
+// マップ初期化のコールバック関数として登録
+window.initMap = initMap;
