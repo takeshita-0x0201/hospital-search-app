@@ -44,7 +44,7 @@ let infoWindow;
 let autocomplete;
 let sessionToken;
 let geocoder;
-let distanceMatrixService;
+let distanceMatrixService; // 内部的にはRoutes APIを使用
 
 // マップ初期化関数
 async function initMap() {
@@ -228,17 +228,21 @@ async function searchHospitals() {
 
 // 距離と時間の計算
 function calculateDistances(origin, destinations, mode, maxTime) {
-    // Distance Matrix APIのリクエスト
+    // 現代のRoutes APIを使用したDistance Matrix計算
+    // Google Maps JavaScript API v3では内部的にはRoutes APIを使用しますが、
+    // インターフェースはDistanceMatrixServiceのままです
     distanceMatrixService.getDistanceMatrix({
         origins: [origin],
         destinations: destinations,
         travelMode: google.maps.TravelMode[mode],
-        unitSystem: google.maps.UnitSystem.METRIC
+        unitSystem: google.maps.UnitSystem.METRIC,
+        avoidHighways: false,
+        avoidTolls: false
     }, (response, status) => {
         if (status !== "OK") {
             const resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = '<div class="no-results">距離計算中にエラーが発生しました。後でもう一度お試しください。</div>';
-            console.error("Distance Matrix APIエラー:", status);
+            console.error("Routes API (Distance Matrix)エラー:", status);
             return;
         }
         
