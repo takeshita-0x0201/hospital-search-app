@@ -127,8 +127,8 @@ async function createHospitalMarkers() {
                 content: createMarkerElement(hospital.name)
             });
             
-            // マーカークリック時のイベント
-            marker.addListener("click", () => {
+            // マーカークリック時のイベント（gmp-clickを使用）
+            marker.addListener("gmp-click", () => {
                 // 情報ウィンドウの内容
                 const content = `
                     <div class="info-window">
