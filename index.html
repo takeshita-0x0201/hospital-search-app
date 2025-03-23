@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>病院検索システム</title>
-    <link rel="stylesheet" href="sidebar-layout.css">
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -58,34 +58,36 @@
 
                         <div class="form-group specialty-group">
                             <label><i class="fas fa-stethoscope"></i> 診療科</label>
-                            <div id="specialtyTags" class="specialty-tags">
-                                <!-- クイックタグはJSで動的に追加 -->
-                            </div>
-                            <div class="specialty-dropdown">
-                                <button type="button" id="specialtyDropdownBtn">診療科を選択 <i class="fas fa-chevron-down"></i></button>
-                                <div id="specialtyDropdown" class="specialty-dropdown-content">
-                                    <div class="search-box">
-                                        <input type="text" id="specialtySearch" placeholder="診療科を検索">
-                                    </div>
-                                    <div class="specialty-list" id="specialtyList">
-                                        <!-- 診療科リストはJSで動的に追加 -->
+                            <div class="specialty-selection">
+                                <div id="specialtyTags" class="specialty-tags">
+                                    <!-- クイックタグはJSで動的に追加 -->
+                                </div>
+                                <div class="specialty-dropdown">
+                                    <button type="button" id="specialtyDropdownBtn">診療科を選択 <i class="fas fa-chevron-down"></i></button>
+                                    <div id="specialtyDropdown" class="specialty-dropdown-content">
+                                        <div class="search-box">
+                                            <input type="text" id="specialtySearch" placeholder="診療科を検索">
+                                        </div>
+                                        <div class="specialty-list" id="specialtyList">
+                                            <!-- 診療科リストはJSで動的に追加 -->
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="specialty-filter-mode">
-                                <label class="radio-container">
-                                    <input type="radio" name="specialtyFilterMode" value="AND" checked>
-                                    <span class="checkmark"></span>
-                                    すべての診療科を含む (AND)
-                                </label>
-                                <label class="radio-container">
-                                    <input type="radio" name="specialtyFilterMode" value="OR">
-                                    <span class="checkmark"></span>
-                                    いずれかの診療科を含む (OR)
-                                </label>
-                            </div>
-                            <div id="selectedSpecialties" class="selected-specialties">
-                                <!-- 選択された診療科はJSで動的に追加 -->
+                                <div class="specialty-filter-mode">
+                                    <label class="radio-container">
+                                        <input type="radio" name="specialtyFilterMode" value="AND" checked>
+                                        <span class="checkmark"></span>
+                                        すべての診療科を含む (AND)
+                                    </label>
+                                    <label class="radio-container">
+                                        <input type="radio" name="specialtyFilterMode" value="OR">
+                                        <span class="checkmark"></span>
+                                        いずれかの診療科を含む (OR)
+                                    </label>
+                                </div>
+                                <div id="selectedSpecialties" class="selected-specialties">
+                                    <!-- 選択された診療科はJSで動的に追加 -->
+                                </div>
                             </div>
                         </div>
 
@@ -191,48 +193,6 @@
     
     <!-- メインスクリプト -->
     <script src="hospital-search.js"></script>
-    
-    <!-- 追加のUIスクリプト -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 地図拡大ボタン
-            const expandMapBtn = document.getElementById('expandMapBtn');
-            const fullscreenMapModal = document.getElementById('fullscreenMapModal');
-            const closeMapModal = document.getElementById('closeMapModal');
-            
-            expandMapBtn.addEventListener('click', function() {
-                fullscreenMapModal.style.display = 'flex';
-                
-                // 全画面マップの初期化
-                if (typeof initFullscreenMap === 'function') {
-                    setTimeout(function() {
-                        initFullscreenMap();
-                    }, 100);
-                }
-            });
-            
-            closeMapModal.addEventListener('click', function() {
-                fullscreenMapModal.style.display = 'none';
-            });
-            
-            // ソート機能
-            const sortResults = document.getElementById('sortResults');
-            if (sortResults) {
-                sortResults.addEventListener('change', function() {
-                    if (typeof sortSearchResults === 'function') {
-                        sortSearchResults(this.value);
-                    }
-                });
-            }
-            
-            // モーダル外クリックで閉じる
-            window.addEventListener('click', function(event) {
-                if (event.target === fullscreenMapModal) {
-                    fullscreenMapModal.style.display = 'none';
-                }
-            });
-        });
-    </script>
     
     <!-- Google Maps API -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqh5zuCekqccxBqo9P48SIvPVVoUHl8uw&libraries=places,geometry&callback=initMap"></script>
