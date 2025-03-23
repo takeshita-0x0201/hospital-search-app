@@ -232,13 +232,22 @@ function calculateDistances(origin, destinations, mode, maxTime, hospitals) {
     }
 
     distanceMatrixService.getDistanceMatrix(request, (response, status) => {
-        console.log("Distance Matrix API レスポンス:", response); // デバッグ用ログ
+        console.log("Distance Matrix API ステータス:", status);
+        console.log("Distance Matrix API レスポンス:", response);
+
         if (status !== "OK") {
             const resultsDiv = document.getElementById("results");
-            resultsDiv.innerHTML = '<div class="no-results">距離計算中にエラーが発生しました。後でもう一度お試しください。</div>';
-            console.error("Routes API (Distance Matrix)エラー:", status);
+            resultsDiv.innerHTML = `<div class="no-results">距離計算中にエラーが発生しました。エラーコード: ${status}</div>`;
             return;
         }
+
+        // ルートが見つからない場合のチェック
+        if (response.rows[0].elements.every(element => element.status !== "OK")) {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = '<div class="no-results">該当するルートが見つかりませんでした。</div>';
+            return;
+        }
+
         processResults(response, maxTime, hospitals);
     });
 }
