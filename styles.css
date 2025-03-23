@@ -55,13 +55,13 @@ h2 {
     margin-bottom: 15px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
 }
 
 .result-count {
     font-size: 1rem;
     color: var(--light-text);
     font-weight: normal;
+    margin-left: 10px;
 }
 
 /* フォームスタイル */
@@ -73,12 +73,31 @@ h2 {
     box-shadow: var(--shadow-sm);
 }
 
-.form-group {
-    margin-bottom: 20px;
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
 }
 
-.form-group:last-child {
+.form-row:last-child {
     margin-bottom: 0;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.time-group {
+    flex: 0 0 150px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex: 0 0 auto;
+    align-items: flex-end;
 }
 
 .form-group label {
@@ -109,21 +128,21 @@ h2 {
 .transport-options {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
 }
 
 .transport-option {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 12px 20px;
+    padding: 10px 15px;
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
     flex: 1;
-    min-width: 80px;
+    min-width: 70px;
     text-align: center;
 }
 
@@ -155,13 +174,13 @@ h2 {
 }
 
 .option-icon {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     margin-bottom: 5px;
     color: var(--light-text);
 }
 
 .option-text {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 /* ボタンスタイル */
@@ -200,11 +219,6 @@ h2 {
     background-color: #e4e4e4;
 }
 
-.form-actions {
-    display: flex;
-    gap: 15px;
-}
-
 /* 診療科選択 */
 .specialty-group {
     position: relative;
@@ -219,16 +233,16 @@ h2 {
 .specialty-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 10px;
 }
 
 .specialty-tag {
     background-color: #f1f1f1;
     color: var(--text-color);
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: background-color 0.2s;
     border: 1px solid transparent;
@@ -252,7 +266,7 @@ h2 {
 #specialtyDropdownBtn {
     width: 100%;
     text-align: left;
-    padding: 10px 15px;
+    padding: 8px 12px;
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -260,7 +274,7 @@ h2 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 #specialtyDropdownBtn:hover {
@@ -307,11 +321,12 @@ h2 {
 }
 
 .specialty-item {
-    padding: 8px 12px;
+    padding: 6px 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     border-radius: 4px;
+    font-size: 0.9rem;
 }
 
 .specialty-item:hover {
@@ -330,7 +345,6 @@ h2 {
 }
 
 .specialty-filter-mode {
-    margin-top: 15px;
     display: flex;
     gap: 20px;
 }
@@ -352,8 +366,8 @@ h2 {
 .checkmark {
     position: relative;
     display: inline-block;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     margin-right: 8px;
     border: 2px solid var(--border-color);
     border-radius: 50%;
@@ -373,8 +387,8 @@ h2 {
     display: none;
     top: 3px;
     left: 3px;
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--primary-color);
 }
@@ -386,7 +400,7 @@ h2 {
 .selected-specialties {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     margin-top: 15px;
 }
 
@@ -397,7 +411,7 @@ h2 {
     color: var(--primary-color);
     padding: 5px 10px;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .remove-specialty {
@@ -411,21 +425,246 @@ h2 {
     color: var(--error-color);
 }
 
-/* レイアウト */
-.content-area {
+/* タブスタイル */
+.view-tabs {
     display: flex;
-    gap: 20px;
+    gap: 2px;
+    margin-bottom: 2px;
+}
+
+.view-tab {
+    padding: 12px 20px;
+    background-color: #f1f1f1;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    flex: 1;
+    max-width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--light-text);
+    transition: all 0.2s;
+}
+
+.view-tab i {
+    margin-right: 8px;
+}
+
+.view-tab.active {
+    background-color: white;
+    color: var(--primary-color);
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+}
+
+.view-tab:hover:not(.active) {
+    background-color: #e4e4e4;
+}
+
+/* コンテンツエリア */
+.content-area {
+    background-color: white;
+    border-radius: 0 8px 8px 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.view-content {
+    display: none;
+    width: 100%;
+}
+
+.view-content.active {
+    display: block;
+}
+
+/* リスト表示 */
+#listViewContent {
+    padding: 0;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: #f9f9f9;
+}
+
+.results-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.sort-dropdown {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.results-list {
+    max-height: calc(100vh - 350px);
+    min-height: 400px;
+    overflow-y: auto;
+}
+
+.initial-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--light-text);
+}
+
+.message-icon {
+    font-size: 2rem;
+    color: var(--lighter-text);
+    margin-bottom: 15px;
+}
+
+.no-results {
+    padding: 30px;
+    text-align: center;
+    color: var(--light-text);
+}
+
+.hospital-item {
+    display: flex;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.hospital-item:hover {
+    background-color: var(--hover-color);
+}
+
+.hospital-item:last-child {
+    border-bottom: none;
+}
+
+.hospital-main {
+    flex: 3;
+    padding-right: 15px;
+}
+
+.hospital-details {
+    flex: 2;
+    padding-left: 15px;
+    border-left: 1px solid var(--border-color);
+}
+
+.hospital-name-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+
+.hospital-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.hospital-address {
+    font-size: 0.9rem;
+    color: var(--light-text);
+    margin-bottom: 10px;
+}
+
+.hospital-specialties {
+    display: flex;
     flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.hospital-specialty {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #f1f1f1;
+    white-space: nowrap;
+}
+
+.hospital-specialty.matched {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.hospital-actions {
+    margin-left: 10px;
+}
+
+.btn-show-on-map {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: var(--primary-light);
+    transition: background-color 0.2s;
+}
+
+.btn-show-on-map i {
+    margin-right: 5px;
+}
+
+.btn-show-on-map:hover {
+    background-color: #d0e0fd;
+}
+
+.distance-badge {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.hospital-route {
+    font-size: 0.9rem;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    line-height: 1.5;
+}
+
+.load-more-container {
+    padding: 15px;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+}
+
+.load-more-btn {
+    width: 100%;
+    padding: 12px;
+}
+
+/* 地図表示 */
+#mapViewContent {
+    height: 600px; /* 固定高さ */
 }
 
 .map-container {
-    flex: 1;
-    min-width: 300px;
-    height: 500px;
+    width: 100%;
+    height: 100%;
     position: relative;
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
 }
 
 #map {
@@ -460,146 +699,27 @@ h2 {
     background-color: var(--hover-color);
 }
 
-.results-container {
-    flex: 1;
-    min-width: 300px;
-    max-width: 600px;
+/* 交通手段アイコン */
+.transport-icon {
+    margin-right: 5px;
+    color: var(--primary-color);
 }
 
-.results-list {
-    background-color: white;
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-.initial-message {
-    display: flex;
-    flex-direction: column;
+/* 経路表示 */
+.route-segment {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
-    color: var(--light-text);
-}
-
-.message-icon {
-    font-size: 2rem;
-    color: var(--lighter-text);
-    margin-bottom: 15px;
-}
-
-.no-results {
-    padding: 30px;
-    text-align: center;
-    color: var(--light-text);
-}
-
-.hospital-item {
-    padding: 15px;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.hospital-item:hover {
-    background-color: var(--hover-color);
-}
-
-.hospital-item:last-child {
-    border-bottom: none;
-}
-
-.hospital-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 5px;
-}
-
-.hospital-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin: 0;
-    flex: 1;
-}
-
-.distance-badge {
-    background-color: var(--primary-light);
-    color: var(--primary-color);
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-}
-
-.hospital-address {
-    font-size: 0.9rem;
-    color: var(--light-text);
-    margin-bottom: 10px;
-}
-
-.hospital-route {
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    padding: 8px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
-}
-
-.hospital-specialties {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 10px;
-}
-
-.hospital-specialty {
-    font-size: 0.8rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background-color: #f1f1f1;
-}
-
-.hospital-specialty.matched {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-.hospital-actions {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn-show-on-map {
-    background: none;
-    border: none;
-    color: var(--primary-color);
-    cursor: pointer;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-}
-
-.btn-show-on-map i {
     margin-right: 5px;
 }
 
-.btn-show-on-map:hover {
-    text-decoration: underline;
+.route-arrow {
+    margin: 0 5px;
+    color: var(--light-text);
 }
 
-.load-more-container {
-    margin-top: 15px;
-    text-align: center;
-}
-
-.load-more-btn {
-    width: 100%;
-    padding: 12px;
+.route-total {
+    font-weight: 500;
+    color: var(--primary-color);
 }
 
 /* ローディングオーバーレイ */
@@ -646,23 +766,6 @@ h2 {
     100% { transform: rotate(360deg); }
 }
 
-/* 交通手段アイコン */
-.transport-icon {
-    margin-right: 5px;
-    color: var(--primary-color);
-}
-
-/* 経路表示 */
-.route-segment {
-    display: inline-flex;
-    align-items: center;
-}
-
-.route-arrow {
-    margin: 0 5px;
-    color: var(--light-text);
-}
-
 /* カスタムスクロールバー */
 ::-webkit-scrollbar {
     width: 8px;
@@ -689,25 +792,42 @@ h2 {
         padding: 10px;
     }
     
+    .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .button-group {
+        flex-direction: row;
+    }
+    
     .transport-options {
         flex-wrap: wrap;
     }
     
     .transport-option {
-        flex: 1 0 calc(50% - 10px);
-        min-width: unset;
-    }
-    
-    .map-container {
-        height: 300px;
+        flex: 1 0 calc(50% - 5px);
     }
     
     .results-list {
-        max-height: 400px;
+        max-height: calc(100vh - 300px);
+        min-height: 300px;
     }
     
-    .form-actions {
+    .hospital-item {
         flex-direction: column;
+    }
+    
+    .hospital-details {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        padding-left: 0;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+    
+    #mapViewContent {
+        height: 400px;
     }
     
     .specialty-filter-mode {
@@ -725,12 +845,8 @@ h2 {
         font-size: 1.2rem;
     }
     
-    .form-group {
-        margin-bottom: 15px;
-    }
-    
     .transport-option {
-        flex: 1 0 calc(50% - 10px);
+        flex: 1 0 calc(50% - 5px);
         padding: 8px 10px;
     }
     
@@ -740,5 +856,13 @@ h2 {
     
     .option-text {
         font-size: 0.8rem;
+    }
+    
+    .hospital-name {
+        font-size: 1.1rem;
+    }
+    
+    #mapViewContent {
+        height: 300px;
     }
 }
