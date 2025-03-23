@@ -44,7 +44,7 @@ let infoWindow;
 let autocomplete;
 let sessionToken;
 let geocoder;
-let distanceMatrixService; // 内部的にはRoutes APIを使用
+let distanceMatrixService; // 内部的にはRoutes を使用
 
 // マップ初期化関数
 async function initMap() {
@@ -56,7 +56,7 @@ async function initMap() {
         map = new Map(document.getElementById("map"), {
             center: { lat: 35.466069, lng: 139.622619 },
             zoom: 12,
-            mapId: "3378829b499b78cb"
+            md: "3378829b499b78cb"
         });
         
         // InfoWindowの初期化
@@ -65,7 +65,7 @@ async function initMap() {
         // Geocoderの初期化
         geocoder = new google.maps.Geocoder();
         
-        // Distance Matrix APIの初期化
+        // Distance Matrix の初期化
         distanceMatrixService = new google.maps.DistanceMatrixService();
         
         // 住所オートコンプリートの設定
@@ -217,7 +217,7 @@ async function searchHospitals() {
             return new google.maps.LatLng(hospital.lat, hospital.lng);
         });
         
-        // Distance Matrix APIで距離と時間を計算
+        // Distance Matrix で距離と時間を計算
         calculateDistances(origin, destinations, mode, maxTime);
         
     } catch (error) {
@@ -229,7 +229,7 @@ async function searchHospitals() {
 // 距離と時間の計算
 function calculateDistances(origin, destinations, mode, maxTime) {
     // 現代のRoutes APIを使用したDistance Matrix計算
-    // Google Maps JavaScript API v3では内部的にはRoutes APIを使用しますが、
+    // Google Maps JavaScript  v3では内部的にはRoutes を使用しますが、
     // インターフェースはDistanceMatrixServiceのままです
     distanceMatrixService.getDistanceMatrix({
         origins: [origin],
@@ -242,7 +242,7 @@ function calculateDistances(origin, destinations, mode, maxTime) {
         if (status !== "OK") {
             const resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = '<div class="no-results">距離計算中にエラーが発生しました。後でもう一度お試しください。</div>';
-            console.error("Routes API (Distance Matrix)エラー:", status);
+            console.error("Routes  (Distance Matrix)エラー:", status);
             return;
         }
         
