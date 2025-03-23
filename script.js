@@ -169,7 +169,9 @@ function clearMarkers() {
 // 病院検索
 async function searchHospitals(hospitals) {
     const address = document.getElementById("address").value;
-    const mode = document.getElementById("mode").value;
+    const modeSelect = document.getElementById("mode");
+    const mode = modeSelect.value;
+    const modeText = modeSelect.options[modeSelect.selectedIndex].text;
     const maxTime = parseInt(document.getElementById("maxTime").value);
 
     if (!address) {
@@ -211,7 +213,7 @@ async function searchHospitals(hospitals) {
             calculateDrivingDistances(origin, destinations, maxTime, hospitals);
         } else {
             // 他の交通手段（徒歩、公共交通機関）
-            calculateDistances(origin, destinations, mode, maxTime, hospitals);
+            calculateDistances(origin, destinations, mode, maxTime, hospitals, modeText);
         }
     } catch (error) {
         console.error("検索処理中にエラーが発生しました:", error);
@@ -241,61 +243,58 @@ function calculateDrivingDistances(origin, destinations, maxTime, hospitals) {
         avoidTolls: false
     };
 
-    // 結果格納用の変数
-    const bothResults = {
-        withHighways: null,
-        withoutHighways: null
-    };
-
     // 高速道路利用ありの計算
-    distanceMatrixService.getDistanceMatrix(requestWithHighways, (response, status) => {
-        console.log("Distance Matrix API ステータス (高速道路利用あり):", status);
+    distanceMatrixService.getDistanceMatrix(requestWithHighways, (responseWithHighways, statusWithHighways) => {
+        console.log("Distance Matrix API ステータス (高速道路利用あり):", statusWithHighways);
+        console.log("Response with highways:", responseWithHighways);
         
-        if (status === "OK") {
-            bothResults.withHighways = response;
-            
-            // 高速道路利用なしの計算
-            distanceMatrixService.getDistanceMatrix(requestWithoutHighways, (response2, status2) => {
-                console.log("Distance Matrix API ステータス (高速道路利用なし):", status2);
-                
-                if (status2 === "OK") {
-                    bothResults.withoutHighways = response2;
-                    processDrivingResults(bothResults, maxTime, hospitals);
-                } else {
-                    const resultsDiv = document.getElementById("results");
-                    resultsDiv.innerHTML = `<div class="no-results">距離計算中にエラーが発生しました。エラーコード: ${status2}</div>`;
-                }
-            });
-        } else {
+        if (statusWithHighways !== "OK") {
             const resultsDiv = document.getElementById("results");
-            resultsDiv.innerHTML = `<div class="no-results">距離計算中にエラーが発生しました。エラーコード: ${status}</div>`;
+            resultsDiv.innerHTML = `<div class="no-results">距離計算中にエラーが発生しました。エラーコード: ${statusWithHighways}</div>`;
+            return;
         }
+        
+        // 高速道路利用なしの計算
+        distanceMatrixService.getDistanceMatrix(requestWithoutHighways, (responseWithoutHighways, statusWithoutHighways) => {
+            console.log("Distance Matrix API ステータス (高速道路利用なし):", statusWithoutHighways);
+            console.log("Response without highways:", responseWithoutHighways);
+            
+            if (statusWithoutHighways !== "OK") {
+                const resultsDiv = document.getElementById("results");
+                resultsDiv.innerHTML = `<div class="no-results">距離計算中にエラーが発生しました。エラーコード: ${statusWithoutHighways}</div>`;
+                return;
+            }
+            
+            // 両方の結果が取得できた場合のみ処理を進める
+            processDrivingResults(responseWithHighways, responseWithoutHighways, maxTime, hospitals);
+        });
     });
 }
 
 // 距離と時間の計算（高速道路利用区別なし）
-function calculateDistances(origin, destinations, mode, maxTime, hospitals) {
+function calculateDistances(origin, destinations, mode, maxTime, hospitals, modeText) {
     const request = {
         origins: [origin],
         destinations: destinations,
         travelMode: google.maps.TravelMode[mode],
-        unitSystem: google.maps.UnitSystem.METRIC,
-        avoidHighways: false,
-        avoidTolls: false
+        unitSystem: google.maps.UnitSystem.METRIC
     };
 
     // 公共交通機関（TRANSIT）モードの場合、設定を調整
     if (mode === 'TRANSIT') {
+        const now = new Date();
         request.transitOptions = {
-            departureTime: new Date(), // 現在時刻を出発時刻として設定
-            modes: ['BUS', 'RAIL', 'SUBWAY', 'TRAIN', 'TRAM'], // すべての公共交通機関タイプを含める
-            routingPreference: 'FEWER_TRANSFERS' // 乗り換え最小化
+            departureTime: now,
+            modes: ['BUS', 'RAIL', 'SUBWAY', 'TRAIN', 'TRAM']
         };
+        console.log("TRANSIT mode with departure time:", now);
     }
 
+    console.log(`${modeText}モードのリクエスト:`, request);
+
     distanceMatrixService.getDistanceMatrix(request, (response, status) => {
-        console.log("Distance Matrix API ステータス:", status);
-        console.log("Distance Matrix API レスポンス:", response);
+        console.log(`${modeText} Distance Matrix API ステータス:`, status);
+        console.log(`${modeText} Distance Matrix API レスポンス:`, response);
 
         if (status !== "OK") {
             const resultsDiv = document.getElementById("results");
@@ -303,45 +302,81 @@ function calculateDistances(origin, destinations, mode, maxTime, hospitals) {
             return;
         }
 
-        // ルートが見つからない場合のチェック
-        if (response.rows[0].elements.every(element => element.status !== "OK")) {
+        // 有効なルートがあるか確認
+        if (!response.rows || !response.rows[0] || !response.rows[0].elements || 
+            response.rows[0].elements.every(element => element.status !== "OK")) {
             const resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = '<div class="no-results">該当するルートが見つかりませんでした。</div>';
             return;
         }
 
-        processResults(response, maxTime, hospitals);
+        // ルート検索結果をコンソールに詳細に出力
+        console.log("ルート検索結果詳細:");
+        response.rows[0].elements.forEach((element, index) => {
+            if (element.status === "OK") {
+                console.log(`病院[${index}]: 状態=${element.status}, 距離=${element.distance?.text}, 時間=${element.duration?.text}`);
+            } else {
+                console.log(`病院[${index}]: 状態=${element.status}, エラー=${element.error_message || "不明"}`);
+            }
+        });
+
+        processResults(response, maxTime, hospitals, modeText);
     });
 }
 
 // 車選択時の結果の処理とフィルタリング
-function processDrivingResults(bothResults, maxTime, hospitals) {
+function processDrivingResults(responseWithHighways, responseWithoutHighways, maxTime, hospitals) {
     const results = document.getElementById("results");
     results.innerHTML = "";
 
     const maxTimeInSeconds = maxTime * 60;
     let filteredHospitals = [];
 
-    // 高速道路利用ありのデータを処理
-    if (bothResults.withHighways && bothResults.withHighways.rows[0] && bothResults.withHighways.rows[0].elements) {
-        bothResults.withHighways.rows[0].elements.forEach((element, index) => {
-            if (element.status === "OK") {
-                // 対応する高速道路利用なしのデータを取得
-                const withoutHighwaysElement = bothResults.withoutHighways && 
-                                              bothResults.withoutHighways.rows[0] && 
-                                              bothResults.withoutHighways.rows[0].elements && 
-                                              bothResults.withoutHighways.rows[0].elements[index] && 
-                                              bothResults.withoutHighways.rows[0].elements[index].status === "OK" ? 
-                                              bothResults.withoutHighways.rows[0].elements[index] : null;
+    console.log("processDrivingResults 開始");
+    console.log("maxTimeInSeconds:", maxTimeInSeconds);
 
-                if (element.duration.value <= maxTimeInSeconds) {
+    // 高速道路利用ありのデータを処理
+    if (responseWithHighways.rows && responseWithHighways.rows[0] && responseWithHighways.rows[0].elements) {
+        console.log("高速道路利用あり要素数:", responseWithHighways.rows[0].elements.length);
+        console.log("病院データ数:", hospitals.length);
+        
+        responseWithHighways.rows[0].elements.forEach((elementWithHighways, index) => {
+            if (index >= hospitals.length) {
+                console.warn(`インデックス ${index} が hospitals 配列の範囲外です`);
+                return;
+            }
+
+            console.log(`病院[${index}] ${hospitals[index].name} 高速道路あり:`, elementWithHighways);
+            
+            const elementWithoutHighways = responseWithoutHighways.rows[0].elements[index];
+            console.log(`病院[${index}] ${hospitals[index].name} 高速道路なし:`, elementWithoutHighways);
+
+            if (elementWithHighways.status === "OK") {
+                // 高速道路ありの場合の所要時間（秒）
+                const durationWithHighwaysValue = elementWithHighways.duration.value;
+                
+                // 高速道路なしの場合の所要時間（秒）
+                let durationWithoutHighwaysValue = Infinity;
+                let durationWithoutHighwaysText = "不明";
+                
+                if (elementWithoutHighways && elementWithoutHighways.status === "OK") {
+                    durationWithoutHighwaysValue = elementWithoutHighways.duration.value;
+                    durationWithoutHighwaysText = elementWithoutHighways.duration.text;
+                }
+                
+                // 指定時間内なら結果に追加
+                if (durationWithHighwaysValue <= maxTimeInSeconds || durationWithoutHighwaysValue <= maxTimeInSeconds) {
                     filteredHospitals.push({
                         hospital: hospitals[index],
-                        durationWithHighways: element.duration.text,
-                        durationWithHighwaysValue: element.duration.value,
-                        durationWithoutHighways: withoutHighwaysElement ? withoutHighwaysElement.duration.text : "不明",
-                        durationWithoutHighwaysValue: withoutHighwaysElement ? withoutHighwaysElement.duration.value : Infinity
+                        durationWithHighways: elementWithHighways.duration.text,
+                        durationWithHighwaysValue: durationWithHighwaysValue,
+                        durationWithoutHighways: durationWithoutHighwaysText,
+                        durationWithoutHighwaysValue: durationWithoutHighwaysValue
                     });
+                    
+                    console.log(`病院[${index}] ${hospitals[index].name} を結果に追加:`);
+                    console.log(`- 高速あり: ${elementWithHighways.duration.text} (${durationWithHighwaysValue}秒)`);
+                    console.log(`- 高速なし: ${durationWithoutHighwaysText} (${durationWithoutHighwaysValue}秒)`);
                 }
             }
         });
@@ -349,6 +384,7 @@ function processDrivingResults(bothResults, maxTime, hospitals) {
 
     // 時間順にソート（高速道路利用ありの時間でソート）
     filteredHospitals.sort((a, b) => a.durationWithHighwaysValue - b.durationWithHighwaysValue);
+    console.log("フィルター後の病院数:", filteredHospitals.length);
 
     if (filteredHospitals.length > 0) {
         filteredHospitals.forEach(item => {
@@ -388,28 +424,47 @@ function processDrivingResults(bothResults, maxTime, hospitals) {
 }
 
 // 結果の処理とフィルタリング（車以外のモード）
-function processResults(response, maxTime, hospitals) {
+function processResults(response, maxTime, hospitals, modeText) {
     const results = document.getElementById("results");
     results.innerHTML = "";
 
     const maxTimeInSeconds = maxTime * 60;
     let filteredHospitals = [];
 
-    if (response.rows[0] && response.rows[0].elements) {
+    console.log(`${modeText}の結果処理開始、最大時間: ${maxTimeInSeconds}秒`);
+
+    if (response.rows && response.rows[0] && response.rows[0].elements) {
+        console.log(`結果要素数: ${response.rows[0].elements.length}`);
+        
         response.rows[0].elements.forEach((element, index) => {
-            if (element.status === "OK") {
+            if (index >= hospitals.length) {
+                console.warn(`インデックス ${index} が hospitals 配列の範囲外です`);
+                return;
+            }
+            
+            console.log(`病院[${index}] ${hospitals[index].name} 状態: ${element.status}`);
+            
+            if (element.status === "OK" && element.duration) {
+                console.log(`- 所要時間: ${element.duration.text} (${element.duration.value}秒)`);
+                
                 if (element.duration.value <= maxTimeInSeconds) {
                     filteredHospitals.push({
                         hospital: hospitals[index],
                         duration: element.duration.text,
                         durationValue: element.duration.value
                     });
+                    console.log(`- 基準時間内のため結果に追加`);
                 }
+            } else {
+                console.log(`- 無効な結果またはルートなし`);
             }
         });
+    } else {
+        console.warn("有効な結果行がありません");
     }
 
     filteredHospitals.sort((a, b) => a.durationValue - b.durationValue);
+    console.log(`フィルター後の病院数: ${filteredHospitals.length}`);
 
     if (filteredHospitals.length > 0) {
         filteredHospitals.forEach(item => {
