@@ -6,6 +6,7 @@
 
 // グローバル変数
 let map;
+let fullscreenMap;
 let markers = [];
 let infoWindow;
 let autocomplete;
@@ -35,6 +36,16 @@ const DISTANCE_FACTOR = {
 // マップ初期化
 async function initMap() {
     try {
+        // マップの初期化前にロード中のメッセージを表示
+        if (document.getElementById("map")) {
+            document.getElementById("map").innerHTML = `
+                <div class="map-loading">
+                    <div class="spinner"></div>
+                    <div>Google Maps を読み込み中...</div>
+                </div>
+            `;
+        }
+        
         // ローディングインジケータを表示
         showLoading('Google Maps を読み込み中...');
         
@@ -46,7 +57,7 @@ async function initMap() {
         map = new Map(document.getElementById('map'), {
             center: { lat: 35.681236, lng: 139.767125 },
             zoom: 12,
-            mapId: 'DEMO_MAP_ID'
+            mapId: "DEMO_MAP_ID"
         });
         
         // 情報ウィンドウの初期化
@@ -82,6 +93,49 @@ async function initMap() {
         hideLoading();
         showError('マップの読み込みに失敗しました。ページを再読み込みしてください。');
     }
+}
+
+// フルスクリーンマップの初期化
+function initFullscreenMap() {
+    // 既存の地図データがある場合は、それを利用して新しいマップを作成
+    if (!map) return;
+    
+    const fullscreenMapContainer = document.getElementById('fullscreenMap');
+    if (!fullscreenMapContainer) return;
+    
+    // 新しい地図インスタンスの作成
+    google.maps.importLibrary("maps").then(({Map}) => {
+        fullscreenMap = new Map(fullscreenMapContainer, {
+            center: map.getCenter(),
+            zoom: map.getZoom(),
+            mapId: "FULLSCREEN_MAP_ID"
+        });
+        
+        // マーカーを追加
+        markers.forEach(marker => {
+            const newMarker = new google.maps.Marker({
+                position: marker.getPosition(),
+                map: fullscreenMap,
+                title: marker.getTitle(),
+                animation: google.maps.Animation.DROP
+            });
+            
+            // 情報ウィンドウの内容をコピー
+            if (marker.infoWindow) {
+                const infoWindow = new google.maps.InfoWindow({
+                    content: marker.infoWindow.getContent(),
+                    maxWidth: 300
+                });
+                
+                newMarker.addListener('click', () => {
+                    infoWindow.open(fullscreenMap, newMarker);
+                });
+            }
+        });
+        
+        // ウィンドウリサイズでサイズ調整
+        google.maps.event.trigger(fullscreenMap, 'resize');
+    });
 }
 
 // 病院データをスプレッドシートから取得
@@ -212,18 +266,68 @@ function setupEventListeners() {
     });
     
     // マップタイプ切替ボタン
-    document.getElementById('mapTypeBtn').addEventListener('click', toggleMapType);
+    const mapTypeBtn = document.getElementById('mapTypeBtn');
+    if (mapTypeBtn) {
+        mapTypeBtn.addEventListener('click', toggleMapType);
+    }
     
     // マップセンタリングボタン
-    document.getElementById('centerMapBtn').addEventListener('click', () => {
-        if (currentSearchOrigin) {
-            map.setCenter(currentSearchOrigin);
-            map.setZoom(15);
+    const centerMapBtn = document.getElementById('centerMapBtn');
+    if (centerMapBtn) {
+        centerMapBtn.addEventListener('click', () => {
+            if (currentSearchOrigin) {
+                map.setCenter(currentSearchOrigin);
+                map.setZoom(15);
+            }
+        });
+    }
+    
+    // もっと見るボタン
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreResults);
+    }
+    
+    // 地図拡大ボタン
+    const expandMapBtn = document.getElementById('expandMapBtn');
+    if (expandMapBtn) {
+        expandMapBtn.addEventListener('click', function() {
+            const fullscreenMapModal = document.getElementById('fullscreenMapModal');
+            if (fullscreenMapModal) {
+                fullscreenMapModal.style.display = 'flex';
+                setTimeout(function() {
+                    initFullscreenMap();
+                }, 100);
+            }
+        });
+    }
+    
+    // 全画面マップを閉じるボタン
+    const closeMapModal = document.getElementById('closeMapModal');
+    if (closeMapModal) {
+        closeMapModal.addEventListener('click', function() {
+            const fullscreenMapModal = document.getElementById('fullscreenMapModal');
+            if (fullscreenMapModal) {
+                fullscreenMapModal.style.display = 'none';
+            }
+        });
+    }
+    
+    // モーダル外クリックで閉じる
+    window.addEventListener('click', function(event) {
+        const fullscreenMapModal = document.getElementById('fullscreenMapModal');
+        if (event.target === fullscreenMapModal) {
+            fullscreenMapModal.style.display = 'none';
         }
     });
     
-    // もっと見るボタン
-    document.getElementById('loadMoreBtn').addEventListener('click', loadMoreResults);
+    // ソート機能
+    const sortResults = document.getElementById('sortResults');
+    if (sortResults) {
+        sortResults.addEventListener('change', function() {
+            sortSearchResults(this.value);
+        });
+    }
 }
 
 // 診療科選択UIの初期化
@@ -233,6 +337,11 @@ function initializeSpecialtyUI() {
     const specialtyDropdownBtn = document.getElementById('specialtyDropdownBtn');
     const specialtyDropdown = document.getElementById('specialtyDropdown');
     const specialtySearch = document.getElementById('specialtySearch');
+    
+    if (!specialtyTags || !specialtyList || !specialtyDropdownBtn || !specialtyDropdown || !specialtySearch) {
+        console.warn('診療科UI要素が見つかりません');
+        return;
+    }
     
     // クイックタグの追加
     COMMON_SPECIALTIES.forEach(code => {
@@ -310,6 +419,8 @@ function initializeSpecialtyUI() {
 // 診療科の選択/選択解除
 function toggleSpecialty(code, name) {
     const selectedSpecialties = document.getElementById('selectedSpecialties');
+    if (!selectedSpecialties) return;
+    
     const existingItem = document.querySelector(`.selected-specialty[data-code="${code}"]`);
     
     if (existingItem) {
@@ -345,18 +456,30 @@ function toggleSpecialty(code, name) {
 
 // 選択された診療科の取得
 function getSelectedSpecialties() {
-    return Array.from(document.querySelectorAll('.selected-specialty')).map(item => item.dataset.code);
+    const selectedItems = document.querySelectorAll('.selected-specialty');
+    return Array.from(selectedItems).map(item => item.dataset.code);
 }
 
 // 診療科フィルターモードの取得（AND/OR）
 function getSpecialtyFilterMode() {
-    return document.querySelector('input[name="specialtyFilterMode"]:checked').value;
+    const checkedRadio = document.querySelector('input[name="specialtyFilterMode"]:checked');
+    return checkedRadio ? checkedRadio.value : 'AND'; // デフォルトはAND
 }
 
 // 検索処理の実行
 async function performSearch() {
     const address = document.getElementById('address').value;
-    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const modeRadios = document.querySelectorAll('input[name="mode"]');
+    let mode = 'DRIVING'; // デフォルト値
+    
+    // 選択されたラジオボタンを取得
+    for (const radio of modeRadios) {
+        if (radio.checked) {
+            mode = radio.value;
+            break;
+        }
+    }
+    
     const maxTime = parseInt(document.getElementById('maxTime').value);
     const selectedSpecialties = getSelectedSpecialties();
     const specialtyFilterMode = getSpecialtyFilterMode();
@@ -566,15 +689,15 @@ async function calculateDrivingDistances(origin, hospitals, maxTime) {
         
         try {
             // 高速道路ありの計算
-            const withHighwaysResults = await calculateBatchDistances(origin, batch, 'DRIVING', false);
+            const responseWithHighways = await calculateBatchDistances(origin, batch, 'DRIVING', false);
             
             // 高速道路なしの計算
-            const withoutHighwaysResults = await calculateBatchDistances(origin, batch, 'DRIVING', true);
+            const responseWithoutHighways = await calculateBatchDistances(origin, batch, 'DRIVING', true);
             
             // 結果を統合
             for (let j = 0; j < batch.length; j++) {
-                const withHighways = withHighwaysResults[j];
-                const withoutHighways = withoutHighwaysResults[j];
+                const withHighways = responseWithHighways[j];
+                const withoutHighways = responseWithoutHighways[j];
                 const hospital = batch[j];
                 
                 // 少なくとも一方の結果が有効で指定時間内
@@ -584,8 +707,18 @@ async function calculateDrivingDistances(origin, hospitals, maxTime) {
                     resultsWithHighways.push({
                         hospital: hospital,
                         route: {
-                            withHighways: withHighways || { text: '不明', value: Infinity },
-                            withoutHighways: withoutHighways || { text: '不明', value: Infinity }
+                            withHighways: withHighways || { 
+                                durationText: '不明', 
+                                durationValue: Infinity,
+                                distanceText: '不明',
+                                distanceValue: Infinity
+                            },
+                            withoutHighways: withoutHighways || { 
+                                durationText: '不明', 
+                                durationValue: Infinity,
+                                distanceText: '不明',
+                                distanceValue: Infinity
+                            }
                         },
                         distance: withHighways ? withHighways.distanceText : (withoutHighways ? withoutHighways.distanceText : '不明'),
                         // 高速道路ありの時間でソート
@@ -930,6 +1063,8 @@ function updateRemainingCount(totalCount) {
     const remainingCount = document.getElementById('remainingCount');
     const loadMoreContainer = document.getElementById('loadMoreContainer');
     
+    if (!remainingCount || !loadMoreContainer) return;
+    
     const remaining = totalCount - displayedHospitals;
     
     if (remaining > 0) {
@@ -950,16 +1085,84 @@ function loadMoreResults() {
     }
 }
 
+// 検索結果のソート
+function sortSearchResults(sortType) {
+    if (!currentSearchParams) return;
+    
+    const cacheKey = JSON.stringify(currentSearchParams);
+    if (!searchResultsCache[cacheKey]) return;
+    
+    const results = [...searchResultsCache[cacheKey]]; // 結果のコピー
+    
+    switch (sortType) {
+        case 'time':
+            // すでに時間順になっているため何もしない
+            break;
+            
+        case 'distance':
+            // 距離順にソート（距離情報がない場合は考慮）
+            results.sort((a, b) => {
+                const distA = a.distance ? parseFloat(a.distance.replace(/[^0-9.]/g, '')) : Infinity;
+                const distB = b.distance ? parseFloat(b.distance.replace(/[^0-9.]/g, '')) : Infinity;
+                return distA - distB;
+            });
+            break;
+            
+        case 'name':
+            // 病院名順にソート
+            results.sort((a, b) => {
+                return a.hospital.name.localeCompare(b.hospital.name, 'ja');
+            });
+            break;
+    }
+    
+    // ソート後の結果を表示（ソート結果はキャッシュしない）
+    showSortedResults(results);
+}
+
+// ソート後の結果を表示
+function showSortedResults(results) {
+    // 結果のクリア
+    const resultsContainer = document.getElementById('results');
+    if (!resultsContainer) return;
+    
+    resultsContainer.innerHTML = '';
+    
+    // 表示件数をリセット
+    displayedHospitals = 0;
+    
+    // 初期表示分だけ表示
+    displayNextBatch(results, currentSearchParams);
+    
+    // もっと見るボタンの表示/非表示
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    if (loadMoreContainer) {
+        if (results.length > BATCH_DISPLAY_COUNT) {
+            loadMoreContainer.style.display = 'block';
+            updateRemainingCount(results.length);
+        } else {
+            loadMoreContainer.style.display = 'none';
+        }
+    }
+}
+
 // 病院を結果リストに追加
 function addHospitalToResults(result, index, searchParams) {
     const resultsContainer = document.getElementById('results');
-    const template = document.getElementById('hospitalItemTemplate');
+    if (!resultsContainer) return;
+    
+    const templateElement = document.getElementById('hospitalItemTemplate');
+    if (!templateElement) {
+        console.error('病院アイテムテンプレートが見つかりません');
+        return;
+    }
+    
     const hospital = result.hospital;
     const mode = searchParams.mode;
     const selectedSpecialties = searchParams.selectedSpecialties;
     
     // テンプレートのクローン
-    const hospitalItem = template.content.cloneNode(true).querySelector('.hospital-item');
+    const hospitalItem = templateElement.content.cloneNode(true).querySelector('.hospital-item');
     
     // 基本情報の設定
     hospitalItem.querySelector('.hospital-name').textContent = hospital.name;
@@ -977,7 +1180,7 @@ function addHospitalToResults(result, index, searchParams) {
         const routeInfo = `
             <div>
                 <span class="transport-icon"><i class="fas fa-car"></i></span>
-                高速道路あり: ${withHighways.text} / 高速道路なし: ${withoutHighways.text}
+                高速道路あり: ${withHighways.durationText} / 高速道路なし: ${withoutHighways.durationText}
             </div>
         `;
         
@@ -1066,21 +1269,24 @@ function addHospitalToResults(result, index, searchParams) {
     }
     
     // 地図表示ボタンのイベント
-    hospitalItem.querySelector('.btn-show-on-map').addEventListener('click', () => {
-        // マップを病院位置にセンタリング
-        map.setCenter({ lat: hospital.lat, lng: hospital.lng });
-        map.setZoom(16);
-        
-        // その病院のマーカーを開く
-        const marker = markers.find(m => 
-            m.position.lat() === hospital.lat && 
-            m.position.lng() === hospital.lng
-        );
-        
-        if (marker && marker.infoWindow) {
-            marker.infoWindow.open(map, marker);
-        }
-    });
+    const mapButton = hospitalItem.querySelector('.btn-show-on-map');
+    if (mapButton) {
+        mapButton.addEventListener('click', () => {
+            // マップを病院位置にセンタリング
+            map.setCenter({ lat: hospital.lat, lng: hospital.lng });
+            map.setZoom(16);
+            
+            // その病院のマーカーを開く
+            const marker = markers.find(m => 
+                m.position.lat() === hospital.lat && 
+                m.position.lng() === hospital.lng
+            );
+            
+            if (marker && marker.infoWindow) {
+                marker.infoWindow.open(map, marker);
+            }
+        });
+    }
     
     // 病院のマーカーを追加
     addHospitalMarker(hospital, result, mode, selectedSpecialties);
@@ -1109,8 +1315,8 @@ function addHospitalMarker(hospital, result, mode, selectedSpecialties) {
     // 交通手段に応じた所要時間表示
     if (mode === 'DRIVING') {
         infoContent += `
-            <p><strong>所要時間（高速道路あり）:</strong> ${result.route.withHighways.text}</p>
-            <p><strong>所要時間（高速道路なし）:</strong> ${result.route.withoutHighways.text}</p>
+            <p><strong>所要時間（高速道路あり）:</strong> ${result.route.withHighways.durationText}</p>
+            <p><strong>所要時間（高速道路なし）:</strong> ${result.route.withoutHighways.durationText}</p>
             <p><strong>距離:</strong> ${result.distance}</p>
         `;
     } else if (mode === 'TRANSIT') {
@@ -1240,122 +1446,21 @@ function toggleMapType() {
     }
 }
 
-/**
- * 以下の関数を hospital-search.js に追加してください
- * sortSearchResults関数を実装し、既存のコードを修正して新しいUI変更に対応します
- */
-
-// 検索結果のソート
-function sortSearchResults(sortType) {
-    if (!currentSearchParams) return;
-    
-    const cacheKey = JSON.stringify(currentSearchParams);
-    if (!searchResultsCache[cacheKey]) return;
-    
-    const results = [...searchResultsCache[cacheKey]]; // 結果のコピー
-    
-    switch (sortType) {
-        case 'time':
-            // すでに時間順になっているため何もしない
-            break;
-            
-        case 'distance':
-            // 距離順にソート（距離情報がない場合は考慮）
-            results.sort((a, b) => {
-                const distA = a.distance ? parseFloat(a.distance.replace(/[^0-9.]/g, '')) : Infinity;
-                const distB = b.distance ? parseFloat(b.distance.replace(/[^0-9.]/g, '')) : Infinity;
-                return distA - distB;
-            });
-            break;
-            
-        case 'name':
-            // 病院名順にソート
-            results.sort((a, b) => {
-                return a.hospital.name.localeCompare(b.hospital.name, 'ja');
-            });
-            break;
-    }
-    
-    // ソート後の結果を表示（ソート結果はキャッシュしない）
-    showSortedResults(results);
-}
-
-// ソート後の結果を表示
-function showSortedResults(results) {
-    // 結果のクリア
-    const resultsContainer = document.getElementById('results');
-    resultsContainer.innerHTML = '';
-    
-    // 表示件数をリセット
-    displayedHospitals = 0;
-    
-    // 初期表示分だけ表示
-    displayNextBatch(results, currentSearchParams);
-    
-    // もっと見るボタンの表示/非表示
-    const loadMoreContainer = document.getElementById('loadMoreContainer');
-    if (results.length > BATCH_DISPLAY_COUNT) {
-        loadMoreContainer.style.display = 'block';
-        updateRemainingCount(results.length);
-    } else {
-        loadMoreContainer.style.display = 'none';
-    }
-}
-
-// 検索結果の表示関数を修正
-function displaySearchResults(results, searchParams) {
-    const resultsContainer = document.getElementById('results');
-    const resultCount = document.getElementById('resultCount');
-    const loadMoreContainer = document.getElementById('loadMoreContainer');
-    const remainingCount = document.getElementById('remainingCount');
-    
-    // 表示をクリア
-    clearResults();
-    
-    // 地図マーカーをクリア
-    clearMarkers();
-    
-    // 出発地点のマーカーを追加
-    if (currentSearchOrigin) {
-        addMarker(currentSearchOrigin, '出発地点', true);
-    }
-    
-    // 結果数の表示
-    resultCount.textContent = `(${results.length}件)`;
-    
-    // 結果がない場合
-    if (results.length === 0) {
-        showNoResults('条件に合う病院が見つかりませんでした');
-        return;
-    }
-    
-    // 初期表示分だけ表示
-    displayedHospitals = 0;
-    displayNextBatch(results, searchParams);
-    
-    // もっと見るボタンの表示/非表示
-    if (results.length > BATCH_DISPLAY_COUNT) {
-        loadMoreContainer.style.display = 'block';
-        updateRemainingCount(results.length);
-    } else {
-        loadMoreContainer.style.display = 'none';
-    }
-    
-    // 地図を適切な範囲に調整
-    adjustMapBounds();
-    
-    // リスト表示タブをアクティブにする
-    document.getElementById('listViewTab').click();
-}
-
 // 結果表示をクリア
 function clearResults() {
     const resultsContainer = document.getElementById('results');
     const resultCount = document.getElementById('resultCount');
     const loadMoreContainer = document.getElementById('loadMoreContainer');
     
-    resultCount.textContent = '';
-    loadMoreContainer.style.display = 'none';
+    if (!resultsContainer) return;
+    
+    if (resultCount) {
+        resultCount.textContent = '';
+    }
+    
+    if (loadMoreContainer) {
+        loadMoreContainer.style.display = 'none';
+    }
     
     // 初期メッセージ
     resultsContainer.innerHTML = `
@@ -1373,6 +1478,7 @@ function clearResults() {
 // 検索結果なしの表示
 function showNoResults(message) {
     const resultsContainer = document.getElementById('results');
+    if (!resultsContainer) return;
     
     resultsContainer.innerHTML = `
         <div class="no-results">
@@ -1395,6 +1501,8 @@ function showLoading(message) {
     const loadingMessage = document.getElementById('loadingMessage');
     const loadingProgress = document.getElementById('loadingProgress');
     
+    if (!loadingOverlay || !loadingMessage || !loadingProgress) return;
+    
     loadingMessage.textContent = message;
     loadingProgress.textContent = '';
     loadingOverlay.style.display = 'flex';
@@ -1403,11 +1511,15 @@ function showLoading(message) {
 // ローディングインジケータの非表示
 function hideLoading() {
     const loadingOverlay = document.getElementById('loadingOverlay');
-    loadingOverlay.style.display = 'none';
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
 }
 
 // ローディング進捗の更新
 function updateLoadingProgress(message) {
     const loadingProgress = document.getElementById('loadingProgress');
-    loadingProgress.textContent = message;
+    if (loadingProgress) {
+        loadingProgress.textContent = message;
+    }
 }
