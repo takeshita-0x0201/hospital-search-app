@@ -3,93 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>病院検索マップシステム</title>
-    <!-- CSSスタイルを追加 -->
+    <title>病院検索システム</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1 style="text-align: center; margin: 20px 0;">病院検索マップシステム</h1>
-        
+        <header>
+            <h1>病院検索システム</h1>
+        </header>
+
         <!-- 検索フォーム -->
-        <div class="search-container">
-            <div class="form-row">
+        <div class="search-form-container">
+            <form id="searchForm">
                 <div class="form-group">
-                    <label for="address" class="form-label">住所または駅名:</label>
-                    <input type="text" id="address" class="form-control" placeholder="例: 横浜駅">
+                    <label for="address"><i class="fas fa-map-marker-alt"></i> 住所または駅名</label>
+                    <input type="text" id="address" placeholder="例: 横浜駅" required>
                 </div>
+
                 <div class="form-group">
-                    <label for="mode" class="form-label">移動手段:</label>
-                    <select id="mode" class="form-control">
-                        <option value="DRIVING">車</option>
-                        <option value="TRANSIT">公共交通機関</option>
-                        <option value="WALKING">徒歩</option>
-                    </select>
+                    <label><i class="fas fa-ambulance"></i> 交通手段</label>
+                    <div class="transport-options">
+                        <label class="transport-option">
+                            <input type="radio" name="mode" value="DRIVING" checked>
+                            <span class="option-icon"><i class="fas fa-car"></i></span>
+                            <span class="option-text">車</span>
+                        </label>
+                        <label class="transport-option">
+                            <input type="radio" name="mode" value="TRANSIT">
+                            <span class="option-icon"><i class="fas fa-subway"></i></span>
+                            <span class="option-text">公共交通機関</span>
+                        </label>
+                        <label class="transport-option">
+                            <input type="radio" name="mode" value="WALKING">
+                            <span class="option-icon"><i class="fas fa-walking"></i></span>
+                            <span class="option-text">徒歩</span>
+                        </label>
+                        <label class="transport-option">
+                            <input type="radio" name="mode" value="BICYCLING">
+                            <span class="option-icon"><i class="fas fa-bicycle"></i></span>
+                            <span class="option-text">自転車</span>
+                        </label>
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label for="maxTime" class="form-label">最大到達時間 (分):</label>
-                    <input type="number" id="maxTime" class="form-control" value="30" min="1" max="120">
+                    <label for="maxTime"><i class="fas fa-clock"></i> 最大到達時間 (分)</label>
+                    <input type="number" id="maxTime" min="1" max="180" value="30">
                 </div>
-                <div class="form-group" style="display: flex; align-items: flex-end;">
-                    <button id="searchBtn" class="btn-search">検索</button>
+
+                <div class="form-group specialty-group">
+                    <label><i class="fas fa-stethoscope"></i> 診療科</label>
+                    <div class="specialty-selection">
+                        <div id="specialtyTags" class="specialty-tags">
+                            <!-- クイックタグはJSで動的に追加 -->
+                        </div>
+                        <div class="specialty-dropdown">
+                            <button type="button" id="specialtyDropdownBtn">診療科を選択 <i class="fas fa-chevron-down"></i></button>
+                            <div id="specialtyDropdown" class="specialty-dropdown-content">
+                                <div class="search-box">
+                                    <input type="text" id="specialtySearch" placeholder="診療科を検索">
+                                </div>
+                                <div class="specialty-list" id="specialtyList">
+                                    <!-- 診療科リストはJSで動的に追加 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="specialty-filter-mode">
+                        <label class="radio-container">
+                            <input type="radio" name="specialtyFilterMode" value="AND" checked>
+                            <span class="checkmark"></span>
+                            すべての診療科を含む (AND)
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="specialtyFilterMode" value="OR">
+                            <span class="checkmark"></span>
+                            いずれかの診療科を含む (OR)
+                        </label>
+                    </div>
+                    <div id="selectedSpecialties" class="selected-specialties">
+                        <!-- 選択された診療科はJSで動的に追加 -->
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="searchButton" class="btn primary">
+                        <i class="fas fa-search"></i> 検索
+                    </button>
+                    <button type="button" id="resetButton" class="btn secondary">
+                        <i class="fas fa-undo"></i> リセット
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- メインコンテンツエリア -->
+        <div class="content-area">
+            <!-- 地図表示エリア -->
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-controls">
+                    <button id="mapTypeBtn" class="map-control-btn" title="地図タイプ切替">
+                        <i class="fas fa-map"></i>
+                    </button>
+                    <button id="centerMapBtn" class="map-control-btn" title="現在地に戻る">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
                 </div>
             </div>
-        </div>
-        
-        <div class="content-container" style="display: flex; flex-wrap: wrap;">
-            <!-- 地図表示エリア -->
-            <div style="flex: 2; min-width: 300px;">
-                <div id="map">
-                    <!-- マップ読み込み中のプレースホルダー -->
-                    <div class="map-loading">
-                        <div class="loading-spinner"></div>
-                        <div>Google Maps を読み込み中...</div>
+
+            <!-- 検索結果エリア -->
+            <div class="results-container">
+                <h2>検索結果 <span id="resultCount" class="result-count"></span></h2>
+                <div id="results" class="results-list">
+                    <!-- 検索前メッセージ -->
+                    <div class="initial-message">
+                        <div class="message-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <p>住所または駅名を入力して検索してください</p>
                     </div>
                 </div>
                 
-                <!-- 地図ナビゲーション -->
-                <div class="map-controls" style="margin-bottom: 20px;">
-                    <div class="nav-buttons">
-                        <button onclick="toggleMapView('map')" class="map-btn active">地図</button>
-                        <button onclick="toggleMapView('satellite')" class="map-btn">航空写真</button>
-                    </div>
+                <!-- もっと見るボタン -->
+                <div id="loadMoreContainer" class="load-more-container" style="display: none;">
+                    <button id="loadMoreBtn" class="btn secondary load-more-btn">
+                        さらに表示 <span id="remainingCount"></span>
+                    </button>
                 </div>
             </div>
-            
-            <!-- 検索結果エリア -->
-            <div style="flex: 1; min-width: 300px;">
-                <h2 style="margin-top: 0; padding-left: 15px;">検索結果</h2>
-                <div id="results">
-                    <div class="no-results">
-                        住所または駅名を入力して検索してください。
-                    </div>
-                </div>
+        </div>
+
+        <!-- ローディングオーバーレイ -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p id="loadingMessage">データを読み込み中...</p>
+                <p id="loadingProgress" class="loading-progress"></p>
             </div>
         </div>
     </div>
+
+    <!-- テンプレート -->
+    <template id="hospitalItemTemplate">
+        <div class="hospital-item">
+            <div class="hospital-header">
+                <h3 class="hospital-name"></h3>
+                <span class="distance-badge"></span>
+            </div>
+            <div class="hospital-address"></div>
+            <div class="hospital-route"></div>
+            <div class="hospital-specialties"></div>
+            <div class="hospital-actions">
+                <button class="btn-show-on-map"><i class="fas fa-map-marker-alt"></i> 地図表示</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- 診療科データ -->
+    <script src="specialties.js"></script>
+    
+    <!-- メインスクリプト -->
+    <script src="hospital-search.js"></script>
     
     <!-- Google Maps API -->
-    <script>
-        // 地図表示の切り替え
-        function toggleMapView(type) {
-            if (map) {
-                if (type === 'map') {
-                    map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-                } else if (type === 'satellite') {
-                    map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-                }
-                
-                // ボタンのアクティブ状態を更新
-                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('active'));
-                event.target.classList.add('active');
-            }
-        }
-    </script>
-    
-    <!-- ここにJavaScriptファイルを読み込む -->
-    <script src="script.js"></script>
-    
-    <!-- Google Maps API (最後に読み込む) -->
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqh5zuCekqccxBqo9P48SIvPVVoUHl8uw&libraries=places&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqh5zuCekqccxBqo9P48SIvPVVoUHl8uw&libraries=places,geometry&callback=initMap"></script>
 </body>
 </html>
