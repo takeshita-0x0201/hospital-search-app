@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>病院検索システム</title>
-    <link rel="stylesheet" href="improved-styles.css">
+    <link rel="stylesheet" href="sidebar-layout.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -14,77 +14,50 @@
             <h1>病院検索システム</h1>
         </header>
 
-        <!-- 検索フォーム -->
-        <div class="search-form-container">
-            <form id="searchForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="address"><i class="fas fa-map-marker-alt"></i> 住所または駅名</label>
-                        <input type="text" id="address" placeholder="例: 横浜駅" required>
-                    </div>
-
-                    <div class="form-group time-group">
-                        <label for="maxTime"><i class="fas fa-clock"></i> 最大到達時間 (分)</label>
-                        <input type="number" id="maxTime" min="1" max="180" value="30">
-                    </div>
-
-                    <div class="form-group button-group">
-                        <button type="submit" id="searchButton" class="btn primary">
-                            <i class="fas fa-search"></i> 検索
-                        </button>
-                        <button type="button" id="resetButton" class="btn secondary">
-                            <i class="fas fa-undo"></i> リセット
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group transport-group">
-                        <label><i class="fas fa-ambulance"></i> 交通手段</label>
-                        <div class="transport-options">
-                            <label class="transport-option">
-                                <input type="radio" name="mode" value="DRIVING" checked>
-                                <span class="option-icon"><i class="fas fa-car"></i></span>
-                                <span class="option-text">車</span>
-                            </label>
-                            <label class="transport-option">
-                                <input type="radio" name="mode" value="TRANSIT">
-                                <span class="option-icon"><i class="fas fa-subway"></i></span>
-                                <span class="option-text">公共交通機関</span>
-                            </label>
-                            <label class="transport-option">
-                                <input type="radio" name="mode" value="WALKING">
-                                <span class="option-icon"><i class="fas fa-walking"></i></span>
-                                <span class="option-text">徒歩</span>
-                            </label>
-                            <label class="transport-option">
-                                <input type="radio" name="mode" value="BICYCLING">
-                                <span class="option-icon"><i class="fas fa-bicycle"></i></span>
-                                <span class="option-text">自転車</span>
-                            </label>
+        <div class="content-wrapper">
+            <!-- 左サイドバー - 検索フォームとマップ -->
+            <div class="sidebar">
+                <!-- 検索フォーム -->
+                <div class="search-form-container">
+                    <form id="searchForm">
+                        <div class="form-group">
+                            <label for="address"><i class="fas fa-map-marker-alt"></i> 住所または駅名</label>
+                            <input type="text" id="address" placeholder="例: 横浜駅" required>
                         </div>
-                    </div>
 
-                    <div class="form-group specialty-filter-group">
-                        <div class="specialty-filter-mode">
-                            <label class="radio-container">
-                                <input type="radio" name="specialtyFilterMode" value="AND" checked>
-                                <span class="checkmark"></span>
-                                すべての診療科を含む (AND)
-                            </label>
-                            <label class="radio-container">
-                                <input type="radio" name="specialtyFilterMode" value="OR">
-                                <span class="checkmark"></span>
-                                いずれかの診療科を含む (OR)
-                            </label>
+                        <div class="form-group transport-group">
+                            <label><i class="fas fa-ambulance"></i> 交通手段</label>
+                            <div class="transport-options">
+                                <label class="transport-option">
+                                    <input type="radio" name="mode" value="DRIVING" checked>
+                                    <span class="option-icon"><i class="fas fa-car"></i></span>
+                                    <span class="option-text">車</span>
+                                </label>
+                                <label class="transport-option">
+                                    <input type="radio" name="mode" value="TRANSIT">
+                                    <span class="option-icon"><i class="fas fa-subway"></i></span>
+                                    <span class="option-text">公共交通機関</span>
+                                </label>
+                                <label class="transport-option">
+                                    <input type="radio" name="mode" value="WALKING">
+                                    <span class="option-icon"><i class="fas fa-walking"></i></span>
+                                    <span class="option-text">徒歩</span>
+                                </label>
+                                <label class="transport-option">
+                                    <input type="radio" name="mode" value="BICYCLING">
+                                    <span class="option-icon"><i class="fas fa-bicycle"></i></span>
+                                    <span class="option-text">自転車</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="form-row specialty-selection-row">
-                    <div class="form-group specialty-group">
-                        <label><i class="fas fa-stethoscope"></i> 診療科</label>
-                        <div class="specialty-selection">
+                        <div class="form-group">
+                            <label for="maxTime"><i class="fas fa-clock"></i> 最大到達時間 (分)</label>
+                            <input type="number" id="maxTime" min="1" max="180" value="30">
+                        </div>
+
+                        <div class="form-group specialty-group">
+                            <label><i class="fas fa-stethoscope"></i> 診療科</label>
                             <div id="specialtyTags" class="specialty-tags">
                                 <!-- クイックタグはJSで動的に追加 -->
                             </div>
@@ -99,29 +72,53 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="specialty-filter-mode">
+                                <label class="radio-container">
+                                    <input type="radio" name="specialtyFilterMode" value="AND" checked>
+                                    <span class="checkmark"></span>
+                                    すべての診療科を含む (AND)
+                                </label>
+                                <label class="radio-container">
+                                    <input type="radio" name="specialtyFilterMode" value="OR">
+                                    <span class="checkmark"></span>
+                                    いずれかの診療科を含む (OR)
+                                </label>
+                            </div>
+                            <div id="selectedSpecialties" class="selected-specialties">
+                                <!-- 選択された診療科はJSで動的に追加 -->
+                            </div>
                         </div>
-                        <div id="selectedSpecialties" class="selected-specialties">
-                            <!-- 選択された診療科はJSで動的に追加 -->
+
+                        <div class="form-actions">
+                            <button type="submit" id="searchButton" class="btn primary">
+                                <i class="fas fa-search"></i> 検索
+                            </button>
+                            <button type="button" id="resetButton" class="btn secondary">
+                                <i class="fas fa-undo"></i> リセット
+                            </button>
                         </div>
+                    </form>
+                </div>
+
+                <!-- 小さな地図表示 -->
+                <div class="mini-map-container">
+                    <div id="map"></div>
+                    <div class="map-controls">
+                        <button id="mapTypeBtn" class="map-control-btn" title="地図タイプ切替">
+                            <i class="fas fa-map"></i>
+                        </button>
+                        <button id="centerMapBtn" class="map-control-btn" title="現在地に戻る">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                        <button id="expandMapBtn" class="map-control-btn" title="地図を拡大">
+                            <i class="fas fa-expand"></i>
+                        </button>
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
 
-        <!-- 表示切替タブ -->
-        <div class="view-tabs">
-            <button id="listViewTab" class="view-tab active">
-                <i class="fas fa-list"></i> リスト表示
-            </button>
-            <button id="mapViewTab" class="view-tab">
-                <i class="fas fa-map-marked-alt"></i> 地図表示
-            </button>
-        </div>
-
-        <!-- メインコンテンツエリア -->
-        <div class="content-area">
-            <!-- 検索結果エリア - 最初に表示 -->
-            <div id="listViewContent" class="view-content active">
+            <!-- 右メインエリア - 検索結果 -->
+            <div class="main-content">
                 <div class="results-header">
                     <h2>検索結果 <span id="resultCount" class="result-count"></span></h2>
                     <div class="results-actions">
@@ -150,20 +147,16 @@
                     </button>
                 </div>
             </div>
+        </div>
 
-            <!-- 地図表示エリア -->
-            <div id="mapViewContent" class="view-content">
-                <div class="map-container">
-                    <div id="map"></div>
-                    <div class="map-controls">
-                        <button id="mapTypeBtn" class="map-control-btn" title="地図タイプ切替">
-                            <i class="fas fa-map"></i>
-                        </button>
-                        <button id="centerMapBtn" class="map-control-btn" title="現在地に戻る">
-                            <i class="fas fa-crosshairs"></i>
-                        </button>
-                    </div>
+        <!-- 全画面マップモーダル -->
+        <div id="fullscreenMapModal" class="fullscreen-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>地図表示</h3>
+                    <button id="closeMapModal" class="close-modal">×</button>
                 </div>
+                <div id="fullscreenMap" class="fullscreen-map"></div>
             </div>
         </div>
 
@@ -180,19 +173,15 @@
     <!-- テンプレート -->
     <template id="hospitalItemTemplate">
         <div class="hospital-item">
-            <div class="hospital-main">
-                <div class="hospital-name-container">
-                    <h3 class="hospital-name"></h3>
-                    <div class="hospital-actions">
-                        <button class="btn-show-on-map"><i class="fas fa-map-marker-alt"></i> 地図</button>
-                    </div>
-                </div>
-                <div class="hospital-address"></div>
-                <div class="hospital-specialties"></div>
+            <div class="hospital-header">
+                <h3 class="hospital-name"></h3>
+                <span class="distance-badge"></span>
             </div>
-            <div class="hospital-details">
-                <div class="distance-badge"></div>
-                <div class="hospital-route"></div>
+            <div class="hospital-address"></div>
+            <div class="hospital-route"></div>
+            <div class="hospital-specialties"></div>
+            <div class="hospital-actions">
+                <button class="btn-show-on-map"><i class="fas fa-map-marker-alt"></i> 地図表示</button>
             </div>
         </div>
     </template>
@@ -205,40 +194,28 @@
     
     <!-- 追加のUIスクリプト -->
     <script>
-        // タブ切り替え機能
         document.addEventListener('DOMContentLoaded', function() {
-            const listViewTab = document.getElementById('listViewTab');
-            const mapViewTab = document.getElementById('mapViewTab');
-            const listViewContent = document.getElementById('listViewContent');
-            const mapViewContent = document.getElementById('mapViewContent');
+            // 地図拡大ボタン
+            const expandMapBtn = document.getElementById('expandMapBtn');
+            const fullscreenMapModal = document.getElementById('fullscreenMapModal');
+            const closeMapModal = document.getElementById('closeMapModal');
             
-            // リスト表示タブ
-            listViewTab.addEventListener('click', function() {
-                listViewTab.classList.add('active');
-                mapViewTab.classList.remove('active');
-                listViewContent.classList.add('active');
-                mapViewContent.classList.remove('active');
-            });
-            
-            // 地図表示タブ
-            mapViewTab.addEventListener('click', function() {
-                mapViewTab.classList.add('active');
-                listViewTab.classList.remove('active');
-                mapViewContent.classList.add('active');
-                listViewContent.classList.remove('active');
+            expandMapBtn.addEventListener('click', function() {
+                fullscreenMapModal.style.display = 'flex';
                 
-                // 地図のリサイズ問題を解決（遅延してリサイズイベントを発火）
-                setTimeout(function() {
-                    window.dispatchEvent(new Event('resize'));
-                    
-                    // 地図が表示されているときに地図の境界を調整
-                    if (typeof adjustMapBounds === 'function' && markers.length > 0) {
-                        adjustMapBounds();
-                    }
-                }, 100);
+                // 全画面マップの初期化
+                if (typeof initFullscreenMap === 'function') {
+                    setTimeout(function() {
+                        initFullscreenMap();
+                    }, 100);
+                }
             });
             
-            // ソート機能（これはhospital-search.jsに対応する関数を追加する必要があります）
+            closeMapModal.addEventListener('click', function() {
+                fullscreenMapModal.style.display = 'none';
+            });
+            
+            // ソート機能
             const sortResults = document.getElementById('sortResults');
             if (sortResults) {
                 sortResults.addEventListener('change', function() {
@@ -247,6 +224,13 @@
                     }
                 });
             }
+            
+            // モーダル外クリックで閉じる
+            window.addEventListener('click', function(event) {
+                if (event.target === fullscreenMapModal) {
+                    fullscreenMapModal.style.display = 'none';
+                }
+            });
         });
     </script>
     
