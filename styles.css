@@ -14,6 +14,7 @@
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     --shadow-md: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
     --border-radius: 8px;
+    --sidebar-width: 350px;
 }
 
 * {
@@ -32,9 +33,9 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 10px;
 }
 
 header {
@@ -57,6 +58,12 @@ h2 {
     align-items: center;
 }
 
+h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
 .result-count {
     font-size: 1rem;
     color: var(--light-text);
@@ -64,40 +71,40 @@ h2 {
     margin-left: 10px;
 }
 
-/* フォームスタイル */
+/* レイアウト */
+.content-wrapper {
+    display: flex;
+    gap: 20px;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+}
+
+.main-content {
+    flex: 1;
+    min-width: 0; /* flexboxでの最小幅を確保 */
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+}
+
+/* 検索フォーム */
 .search-form-container {
     background-color: white;
-    padding: 20px;
+    padding: 15px;
     border-radius: var(--border-radius);
     margin-bottom: 20px;
     box-shadow: var(--shadow-sm);
 }
 
-.form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
+.form-group {
     margin-bottom: 15px;
 }
 
-.form-row:last-child {
+.form-group:last-child {
     margin-bottom: 0;
-}
-
-.form-group {
-    flex: 1;
-    min-width: 200px;
-}
-
-.time-group {
-    flex: 0 0 150px;
-}
-
-.button-group {
-    display: flex;
-    gap: 10px;
-    flex: 0 0 auto;
-    align-items: flex-end;
 }
 
 .form-group label {
@@ -105,15 +112,16 @@ h2 {
     margin-bottom: 8px;
     font-weight: 500;
     color: var(--text-color);
+    font-size: 0.9rem;
 }
 
 .form-group input[type="text"],
 .form-group input[type="number"] {
     width: 100%;
-    padding: 10px 15px;
+    padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-family: inherit;
 }
 
@@ -126,24 +134,20 @@ h2 {
 
 /* 交通手段選択 */
 .transport-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
 }
 
 .transport-option {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    padding: 10px 15px;
+    padding: 8px 12px;
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex: 1;
-    min-width: 70px;
-    text-align: center;
 }
 
 .transport-option:hover {
@@ -155,17 +159,13 @@ h2 {
     display: none;
 }
 
-.transport-option input[type="radio"]:checked + .option-icon {
-    color: var(--primary-color);
+.transport-option .option-icon {
+    color: var(--light-text);
+    margin-right: 8px;
 }
 
-.transport-option input[type="radio"]:checked + .option-icon + .option-text {
-    color: var(--primary-color);
-    font-weight: 500;
-}
-
-.transport-option input[type="radio"]:checked ~ .option-icon {
-    color: var(--primary-color);
+.transport-option .option-text {
+    font-size: 0.85rem;
 }
 
 .transport-option:has(input[type="radio"]:checked) {
@@ -173,23 +173,19 @@ h2 {
     border-color: var(--primary-color);
 }
 
-.option-icon {
-    font-size: 1.3rem;
-    margin-bottom: 5px;
-    color: var(--light-text);
-}
-
-.option-text {
-    font-size: 0.85rem;
+.transport-option:has(input[type="radio"]:checked) .option-icon,
+.transport-option:has(input[type="radio"]:checked) .option-text {
+    color: var(--primary-color);
+    font-weight: 500;
 }
 
 /* ボタンスタイル */
 .btn {
-    padding: 10px 20px;
+    padding: 8px 15px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
@@ -219,28 +215,27 @@ h2 {
     background-color: #e4e4e4;
 }
 
-/* 診療科選択 */
-.specialty-group {
-    position: relative;
-}
-
-.specialty-selection {
+.form-actions {
     display: flex;
-    flex-direction: column;
     gap: 10px;
 }
 
+.form-actions .btn {
+    flex: 1;
+}
+
+/* 診療科選択 */
 .specialty-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 10px;
 }
 
 .specialty-tag {
     background-color: #f1f1f1;
     color: var(--text-color);
-    padding: 6px 10px;
+    padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.85rem;
     cursor: pointer;
@@ -261,6 +256,7 @@ h2 {
 
 .specialty-dropdown {
     position: relative;
+    margin-bottom: 10px;
 }
 
 #specialtyDropdownBtn {
@@ -346,14 +342,16 @@ h2 {
 
 .specialty-filter-mode {
     display: flex;
-    gap: 20px;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 .radio-container {
     display: flex;
     align-items: center;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     user-select: none;
 }
 
@@ -401,7 +399,6 @@ h2 {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 15px;
 }
 
 .selected-specialty {
@@ -409,7 +406,7 @@ h2 {
     align-items: center;
     background-color: var(--primary-light);
     color: var(--primary-color);
-    padding: 5px 10px;
+    padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.85rem;
 }
@@ -425,66 +422,51 @@ h2 {
     color: var(--error-color);
 }
 
-/* タブスタイル */
-.view-tabs {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 2px;
-}
-
-.view-tab {
-    padding: 12px 20px;
-    background-color: #f1f1f1;
-    border: none;
-    border-radius: 8px 8px 0 0;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    flex: 1;
-    max-width: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--light-text);
-    transition: all 0.2s;
-}
-
-.view-tab i {
-    margin-right: 8px;
-}
-
-.view-tab.active {
-    background-color: white;
-    color: var(--primary-color);
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
-}
-
-.view-tab:hover:not(.active) {
-    background-color: #e4e4e4;
-}
-
-/* コンテンツエリア */
-.content-area {
-    background-color: white;
-    border-radius: 0 8px 8px 8px;
+/* 小さな地図 */
+.mini-map-container {
+    width: 100%;
+    height: 250px;
+    position: relative;
+    margin-bottom: 20px;
+    border-radius: var(--border-radius);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
 }
 
-.view-content {
-    display: none;
+#map {
     width: 100%;
+    height: 100%;
 }
 
-.view-content.active {
-    display: block;
+.map-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
-/* リスト表示 */
-#listViewContent {
-    padding: 0;
+.map-control-btn {
+    width: 30px;
+    height: 30px;
+    background-color: white;
+    border: none;
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.8rem;
 }
 
+.map-control-btn:hover {
+    background-color: var(--hover-color);
+}
+
+/* 検索結果 */
 .results-header {
     display: flex;
     justify-content: space-between;
@@ -492,6 +474,7 @@ h2 {
     padding: 15px 20px;
     border-bottom: 1px solid var(--border-color);
     background-color: #f9f9f9;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
 .results-actions {
@@ -508,8 +491,7 @@ h2 {
 }
 
 .results-list {
-    max-height: calc(100vh - 350px);
-    min-height: 400px;
+    max-height: calc(100vh - 200px);
     overflow-y: auto;
 }
 
@@ -536,8 +518,7 @@ h2 {
 }
 
 .hospital-item {
-    display: flex;
-    padding: 16px 20px;
+    padding: 15px 20px;
     border-bottom: 1px solid var(--border-color);
     transition: background-color 0.2s;
 }
@@ -550,18 +531,7 @@ h2 {
     border-bottom: none;
 }
 
-.hospital-main {
-    flex: 3;
-    padding-right: 15px;
-}
-
-.hospital-details {
-    flex: 2;
-    padding-left: 15px;
-    border-left: 1px solid var(--border-color);
-}
-
-.hospital-name-container {
+.hospital-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -569,16 +539,34 @@ h2 {
 }
 
 .hospital-name {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--primary-color);
     margin: 0;
+    flex: 1;
+}
+
+.distance-badge {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
 }
 
 .hospital-address {
     font-size: 0.9rem;
     color: var(--light-text);
     margin-bottom: 10px;
+}
+
+.hospital-route {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
 }
 
 .hospital-specialties {
@@ -593,7 +581,6 @@ h2 {
     padding: 2px 6px;
     border-radius: 4px;
     background-color: #f1f1f1;
-    white-space: nowrap;
 }
 
 .hospital-specialty.matched {
@@ -602,7 +589,8 @@ h2 {
 }
 
 .hospital-actions {
-    margin-left: 10px;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .btn-show-on-map {
@@ -610,13 +598,9 @@ h2 {
     border: none;
     color: var(--primary-color);
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     display: flex;
     align-items: center;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background-color: var(--primary-light);
-    transition: background-color 0.2s;
 }
 
 .btn-show-on-map i {
@@ -624,25 +608,7 @@ h2 {
 }
 
 .btn-show-on-map:hover {
-    background-color: #d0e0fd;
-}
-
-.distance-badge {
-    background-color: var(--primary-light);
-    color: var(--primary-color);
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    display: inline-block;
-    margin-bottom: 10px;
-}
-
-.hospital-route {
-    font-size: 0.9rem;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
-    line-height: 1.5;
+    text-decoration: underline;
 }
 
 .load-more-container {
@@ -653,73 +619,57 @@ h2 {
 
 .load-more-btn {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
 }
 
-/* 地図表示 */
-#mapViewContent {
-    height: 600px; /* 固定高さ */
-}
-
-.map-container {
+/* フルスクリーンマップモーダル */
+.fullscreen-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    position: relative;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
 }
 
-#map {
-    width: 100%;
-    height: 100%;
-}
-
-.map-controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+.modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 1200px;
+    height: 90%;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
-    gap: 10px;
 }
 
-.map-control-btn {
-    width: 40px;
-    height: 40px;
-    background-color: white;
-    border: none;
-    border-radius: 4px;
-    box-shadow: var(--shadow-sm);
+.modal-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
     cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.map-control-btn:hover {
-    background-color: var(--hover-color);
-}
-
-/* 交通手段アイコン */
-.transport-icon {
-    margin-right: 5px;
-    color: var(--primary-color);
-}
-
-/* 経路表示 */
-.route-segment {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 5px;
-}
-
-.route-arrow {
-    margin: 0 5px;
     color: var(--light-text);
 }
 
-.route-total {
-    font-weight: 500;
-    color: var(--primary-color);
+.fullscreen-map {
+    flex: 1;
+    width: 100%;
 }
 
 /* ローディングオーバーレイ */
@@ -766,6 +716,23 @@ h2 {
     100% { transform: rotate(360deg); }
 }
 
+/* 交通手段アイコン */
+.transport-icon {
+    margin-right: 5px;
+    color: var(--primary-color);
+}
+
+/* 経路表示 */
+.route-segment {
+    display: inline-flex;
+    align-items: center;
+}
+
+.route-arrow {
+    margin: 0 5px;
+    color: var(--light-text);
+}
+
 /* カスタムスクロールバー */
 ::-webkit-scrollbar {
     width: 8px;
@@ -787,52 +754,44 @@ h2 {
 }
 
 /* レスポンシブデザイン */
+@media (max-width: 992px) {
+    .content-wrapper {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+    }
+    
+    .mini-map-container {
+        height: 200px;
+    }
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 10px;
     }
     
-    .form-row {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .button-group {
-        flex-direction: row;
-    }
-    
     .transport-options {
-        flex-wrap: wrap;
+        grid-template-columns: repeat(2, 1fr);
     }
     
-    .transport-option {
-        flex: 1 0 calc(50% - 5px);
+    .form-actions {
+        flex-direction: column;
     }
     
     .results-list {
-        max-height: calc(100vh - 300px);
-        min-height: 300px;
+        max-height: 500px;
     }
     
-    .hospital-item {
+    .hospital-header {
         flex-direction: column;
     }
     
-    .hospital-details {
-        border-left: none;
-        border-top: 1px solid var(--border-color);
-        padding-left: 0;
-        padding-top: 10px;
-        margin-top: 10px;
-    }
-    
-    #mapViewContent {
-        height: 400px;
-    }
-    
-    .specialty-filter-mode {
-        flex-direction: column;
-        gap: 10px;
+    .distance-badge {
+        align-self: flex-start;
+        margin-top: 5px;
     }
 }
 
@@ -845,24 +804,7 @@ h2 {
         font-size: 1.2rem;
     }
     
-    .transport-option {
-        flex: 1 0 calc(50% - 5px);
-        padding: 8px 10px;
-    }
-    
-    .option-icon {
-        font-size: 1.2rem;
-    }
-    
-    .option-text {
-        font-size: 0.8rem;
-    }
-    
     .hospital-name {
         font-size: 1.1rem;
-    }
-    
-    #mapViewContent {
-        height: 300px;
     }
 }
