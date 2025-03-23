@@ -1,345 +1,644 @@
-/* 全体レイアウトスタイル */
-body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+/* 全体のスタイル */
+:root {
+    --primary-color: #1a73e8;
+    --primary-dark: #0d47a1;
+    --primary-light: #e8f0fe;
+    --secondary-color: #4caf50;
+    --text-color: #333;
+    --light-text: #666;
+    --lighter-text: #888;
+    --border-color: #ddd;
+    --hover-color: #f5f5f5;
+    --error-color: #d32f2f;
+    --success-color: #388e3c;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-md: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --border-radius: 8px;
+}
+
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    color: #333;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    margin-top: 0;
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
 }
 
-/* 検索フォームスタイル */
-.search-container {
-    background-color: #f8f9fa;
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+header {
+    text-align: center;
     margin-bottom: 20px;
 }
 
-.form-row {
+h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 1rem 0;
+}
+
+h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 15px;
     display: flex;
-    flex-wrap: wrap;
-    margin: -10px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.result-count {
+    font-size: 1rem;
+    color: var(--light-text);
+    font-weight: normal;
+}
+
+/* フォームスタイル */
+.search-form-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
 }
 
 .form-group {
-    flex: 1;
-    padding: 10px;
-    min-width: 200px;
+    margin-bottom: 20px;
 }
 
-.form-label {
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+/* 交通手段選択 */
+.transport-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.transport-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+}
+
+.transport-option:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary-color);
+}
+
+.transport-option input[type="radio"] {
+    display: none;
+}
+
+.transport-option input[type="radio"]:checked + .option-icon {
+    color: var(--primary-color);
+}
+
+.transport-option input[type="radio"]:checked + .option-icon + .option-text {
+    color: var(--primary-color);
     font-weight: 500;
 }
 
-.form-control {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
+.transport-option input[type="radio"]:checked ~ .option-icon {
+    color: var(--primary-color);
 }
 
-.btn-search {
-    background-color: #007bff;
-    color: white;
-    border: none;
+.transport-option:has(input[type="radio"]:checked) {
+    background-color: var(--primary-light);
+    border-color: var(--primary-color);
+}
+
+.option-icon {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+    color: var(--light-text);
+}
+
+.option-text {
+    font-size: 0.9rem;
+}
+
+/* ボタンスタイル */
+.btn {
     padding: 10px 20px;
+    border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 1rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: background-color 0.2s;
 }
 
-.btn-search:hover {
-    background-color: #0069d9;
+.btn i {
+    margin-right: 8px;
 }
 
-/* 地図コンテナ */
-#map {
-    height: 500px;
-    width: 100%;
-    border-radius: 5px;
-    margin-bottom: 20px;
+.primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.secondary {
+    background-color: #f1f1f1;
+    color: var(--text-color);
+}
+
+.secondary:hover {
+    background-color: #e4e4e4;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+}
+
+/* 診療科選択 */
+.specialty-group {
     position: relative;
 }
 
-/* 検索結果スタイル */
-#results {
-    border-radius: 5px;
+.specialty-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.specialty-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.specialty-tag {
+    background-color: #f1f1f1;
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: 1px solid transparent;
+}
+
+.specialty-tag:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary-color);
+}
+
+.specialty-tag.selected {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.specialty-dropdown {
+    position: relative;
+}
+
+#specialtyDropdownBtn {
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+}
+
+#specialtyDropdownBtn:hover {
+    border-color: var(--primary-color);
+}
+
+.specialty-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    z-index: 10;
+    box-shadow: var(--shadow-md);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.specialty-dropdown-content.show {
+    display: block;
+}
+
+.search-box {
+    padding: 10px;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#specialtySearch {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.specialty-list {
+    padding: 10px;
+}
+
+.specialty-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+}
+
+.specialty-item:hover {
+    background-color: var(--hover-color);
+}
+
+.specialty-item.selected {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.specialty-item .specialty-code {
+    color: var(--lighter-text);
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+.specialty-filter-mode {
+    margin-top: 15px;
+    display: flex;
+    gap: 20px;
+}
+
+.radio-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.radio-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkmark {
+    position: relative;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+}
+
+.radio-container:hover .checkmark {
+    border-color: var(--primary-color);
+}
+
+.radio-container input:checked ~ .checkmark {
+    border-color: var(--primary-color);
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    top: 3px;
+    left: 3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-color);
+}
+
+.radio-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.selected-specialties {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.selected-specialty {
+    display: flex;
+    align-items: center;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.remove-specialty {
+    margin-left: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+}
+
+.remove-specialty:hover {
+    color: var(--error-color);
+}
+
+/* レイアウト */
+.content-area {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.map-container {
+    flex: 1;
+    min-width: 300px;
+    height: 500px;
+    position: relative;
+    border-radius: var(--border-radius);
     overflow: hidden;
+    box-shadow: var(--shadow-sm);
 }
 
-.results-header {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-bottom: 1px solid #ddd;
+#map {
+    width: 100%;
+    height: 100%;
 }
 
-.results-header h3 {
-    margin: 0 0 5px 0;
-    color: #007bff;
+.map-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.results-header p {
-    margin: 0;
-    color: #666;
+.map-control-btn {
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    border: none;
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.map-control-btn:hover {
+    background-color: var(--hover-color);
+}
+
+.results-container {
+    flex: 1;
+    min-width: 300px;
+    max-width: 600px;
 }
 
 .results-list {
-    max-height: 600px;
+    background-color: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    max-height: 500px;
     overflow-y: auto;
+}
+
+.initial-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--light-text);
+}
+
+.message-icon {
+    font-size: 2rem;
+    color: var(--lighter-text);
+    margin-bottom: 15px;
+}
+
+.no-results {
+    padding: 30px;
+    text-align: center;
+    color: var(--light-text);
 }
 
 .hospital-item {
     padding: 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-color);
     cursor: pointer;
     transition: background-color 0.2s;
 }
 
 .hospital-item:hover {
-    background-color: #f5f5f5;
+    background-color: var(--hover-color);
 }
 
-.hospital-name {
-    font-weight: bold;
-    font-size: 16px;
+.hospital-item:last-child {
+    border-bottom: none;
+}
+
+.hospital-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 5px;
 }
 
+.hospital-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0;
+    flex: 1;
+}
+
+.distance-badge {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
 .hospital-address {
-    color: #666;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.hospital-time {
-    color: #333;
-    font-size: 14px;
-}
-
-.hospital-distance {
-    font-size: 13px;
-    color: #777;
-    margin-top: 4px;
-}
-
-.no-results {
-    padding: 20px;
-    text-align: center;
-    color: #666;
-}
-
-/* インフォウィンドウ */
-.info-window {
-    min-width: 250px;
-    max-width: 350px;
-}
-
-.info-window h3 {
-    margin-top: 0;
+    font-size: 0.9rem;
+    color: var(--light-text);
     margin-bottom: 10px;
-    color: #007bff;
 }
 
-.info-window p {
-    margin: 5px 0;
-    font-size: 14px;
+.hospital-route {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
 }
 
-/* マーカースタイル */
-.marker {
+.hospital-specialties {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.hospital-specialty {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #f1f1f1;
+}
+
+.hospital-specialty.matched {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.hospital-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-show-on-map {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
     align-items: center;
 }
 
-.marker-pin {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: #007bff;
-    border: 2px solid white;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+.btn-show-on-map i {
+    margin-right: 5px;
 }
 
-.marker-label {
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    margin-top: 5px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    max-width: 150px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
+.btn-show-on-map:hover {
+    text-decoration: underline;
 }
 
-/* ローディング表示スタイル */
+.load-more-container {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.load-more-btn {
+    width: 100%;
+    padding: 12px;
+}
+
+/* ローディングオーバーレイ */
 .loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(255, 255, 255, 0.9);
     display: flex;
-    align-items: center;
     justify-content: center;
-    z-index: 9999;
-}
-
-.status-overlay {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 4px;
-    z-index: 9998;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    align-items: center;
+    z-index: 1000;
 }
 
 .loading-content {
-    text-align: center;
-    background: white;
+    background-color: white;
     padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    text-align: center;
     max-width: 80%;
 }
 
-.status-content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.loading-spinner {
+.spinner {
     width: 50px;
     height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #3498db;
+    border: 5px solid var(--primary-light);
+    border-top: 5px solid var(--primary-color);
     border-radius: 50%;
+    animation: spin 1s linear infinite;
     margin: 0 auto 20px;
-    animation: spin 1s linear infinite;
-}
-
-.loading-spinner-small {
-    width: 24px;
-    height: 24px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #3498db;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.loading-text {
-    font-size: 18px;
-    margin-bottom: 15px;
-    color: #333;
 }
 
 .loading-progress {
-    font-size: 14px;
-    color: #666;
-}
-
-.status-text {
-    font-size: 14px;
-}
-
-.loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 30px;
-    text-align: center;
-}
-
-.loading:before {
-    content: "";
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
-}
-
-.map-loading {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #f9f9f9;
-    color: #333;
-    font-size: 16px;
-    gap: 15px;
-}
-
-.map-error {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #f9f9f9;
-    color: #d9534f;
-    padding: 20px;
-    text-align: center;
-}
-
-.map-error button {
-    margin-top: 15px;
-    padding: 8px 15px;
-    background-color: #5bc0de;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* もっと見るボタン */
-.more-button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 0 0 5px 5px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #007bff;
-    transition: background-color 0.2s;
-}
-
-.more-button:hover {
-    background-color: #e9ecef;
-}
-
-.more-button:disabled {
-    color: #6c757d;
-    cursor: not-allowed;
+    font-size: 0.9rem;
+    color: var(--light-text);
+    margin-top: 10px;
 }
 
 @keyframes spin {
@@ -347,31 +646,99 @@ h1, h2, h3, h4, h5, h6 {
     100% { transform: rotate(360deg); }
 }
 
-/* レスポンシブデザイン対応 */
+/* 交通手段アイコン */
+.transport-icon {
+    margin-right: 5px;
+    color: var(--primary-color);
+}
+
+/* 経路表示 */
+.route-segment {
+    display: inline-flex;
+    align-items: center;
+}
+
+.route-arrow {
+    margin: 0 5px;
+    color: var(--light-text);
+}
+
+/* カスタムスクロールバー */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* レスポンシブデザイン */
 @media (max-width: 768px) {
-    .form-row {
-        flex-direction: column;
+    .container {
+        padding: 10px;
     }
     
-    .form-group {
-        min-width: auto;
+    .transport-options {
+        flex-wrap: wrap;
     }
     
-    #map {
+    .transport-option {
+        flex: 1 0 calc(50% - 10px);
+        min-width: unset;
+    }
+    
+    .map-container {
         height: 300px;
     }
     
-    .loading-content {
-        padding: 20px;
+    .results-list {
+        max-height: 400px;
     }
     
-    .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border-width: 4px;
+    .form-actions {
+        flex-direction: column;
     }
     
-    .loading-text {
-        font-size: 16px;
+    .specialty-filter-mode {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .transport-option {
+        flex: 1 0 calc(50% - 10px);
+        padding: 8px 10px;
+    }
+    
+    .option-icon {
+        font-size: 1.2rem;
+    }
+    
+    .option-text {
+        font-size: 0.8rem;
     }
 }
