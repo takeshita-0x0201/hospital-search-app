@@ -1240,6 +1240,114 @@ function toggleMapType() {
     }
 }
 
+/**
+ * 以下の関数を hospital-search.js に追加してください
+ * sortSearchResults関数を実装し、既存のコードを修正して新しいUI変更に対応します
+ */
+
+// 検索結果のソート
+function sortSearchResults(sortType) {
+    if (!currentSearchParams) return;
+    
+    const cacheKey = JSON.stringify(currentSearchParams);
+    if (!searchResultsCache[cacheKey]) return;
+    
+    const results = [...searchResultsCache[cacheKey]]; // 結果のコピー
+    
+    switch (sortType) {
+        case 'time':
+            // すでに時間順になっているため何もしない
+            break;
+            
+        case 'distance':
+            // 距離順にソート（距離情報がない場合は考慮）
+            results.sort((a, b) => {
+                const distA = a.distance ? parseFloat(a.distance.replace(/[^0-9.]/g, '')) : Infinity;
+                const distB = b.distance ? parseFloat(b.distance.replace(/[^0-9.]/g, '')) : Infinity;
+                return distA - distB;
+            });
+            break;
+            
+        case 'name':
+            // 病院名順にソート
+            results.sort((a, b) => {
+                return a.hospital.name.localeCompare(b.hospital.name, 'ja');
+            });
+            break;
+    }
+    
+    // ソート後の結果を表示（ソート結果はキャッシュしない）
+    showSortedResults(results);
+}
+
+// ソート後の結果を表示
+function showSortedResults(results) {
+    // 結果のクリア
+    const resultsContainer = document.getElementById('results');
+    resultsContainer.innerHTML = '';
+    
+    // 表示件数をリセット
+    displayedHospitals = 0;
+    
+    // 初期表示分だけ表示
+    displayNextBatch(results, currentSearchParams);
+    
+    // もっと見るボタンの表示/非表示
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    if (results.length > BATCH_DISPLAY_COUNT) {
+        loadMoreContainer.style.display = 'block';
+        updateRemainingCount(results.length);
+    } else {
+        loadMoreContainer.style.display = 'none';
+    }
+}
+
+// 検索結果の表示関数を修正
+function displaySearchResults(results, searchParams) {
+    const resultsContainer = document.getElementById('results');
+    const resultCount = document.getElementById('resultCount');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    const remainingCount = document.getElementById('remainingCount');
+    
+    // 表示をクリア
+    clearResults();
+    
+    // 地図マーカーをクリア
+    clearMarkers();
+    
+    // 出発地点のマーカーを追加
+    if (currentSearchOrigin) {
+        addMarker(currentSearchOrigin, '出発地点', true);
+    }
+    
+    // 結果数の表示
+    resultCount.textContent = `(${results.length}件)`;
+    
+    // 結果がない場合
+    if (results.length === 0) {
+        showNoResults('条件に合う病院が見つかりませんでした');
+        return;
+    }
+    
+    // 初期表示分だけ表示
+    displayedHospitals = 0;
+    displayNextBatch(results, searchParams);
+    
+    // もっと見るボタンの表示/非表示
+    if (results.length > BATCH_DISPLAY_COUNT) {
+        loadMoreContainer.style.display = 'block';
+        updateRemainingCount(results.length);
+    } else {
+        loadMoreContainer.style.display = 'none';
+    }
+    
+    // 地図を適切な範囲に調整
+    adjustMapBounds();
+    
+    // リスト表示タブをアクティブにする
+    document.getElementById('listViewTab').click();
+}
+
 // 結果表示をクリア
 function clearResults() {
     const resultsContainer = document.getElementById('results');
