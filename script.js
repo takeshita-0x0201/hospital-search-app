@@ -206,14 +206,74 @@ async function searchHospitals(hospitals) {
             return new google.maps.LatLng(hospital.lat, hospital.lng);
         });
 
-        calculateDistances(origin, destinations, mode, maxTime, hospitals);
+        if (mode === 'DRIVING') {
+            // 車の場合、高速道路利用あり・なしの両方を計算
+            calculateDrivingDistances(origin, destinations, maxTime, hospitals);
+        } else {
+            // 他の交通手段（徒歩、公共交通機関）
+            calculateDistances(origin, destinations, mode, maxTime, hospitals);
+        }
     } catch (error) {
         console.error("検索処理中にエラーが発生しました:", error);
         resultsDiv.innerHTML = '<div class="no-results">検索処理中にエラーが発生しました。もう一度お試しください。</div>';
     }
 }
 
-// 距離と時間の計算
+// 車での距離と時間の計算（高速道路利用あり・なしの両方）
+function calculateDrivingDistances(origin, destinations, maxTime, hospitals) {
+    // 高速道路利用ありのリクエスト
+    const requestWithHighways = {
+        origins: [origin],
+        destinations: destinations,
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC,
+        avoidHighways: false,
+        avoidTolls: false
+    };
+
+    // 高速道路利用なしのリクエスト
+    const requestWithoutHighways = {
+        origins: [origin],
+        destinations: destinations,
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC,
+        avoidHighways: true,
+        avoidTolls: false
+    };
+
+    // 結果格納用の変数
+    const bothResults = {
+        withHighways: null,
+        withoutHighways: null
+    };
+
+    // 高速道路利用ありの計算
+    distanceMatrixService.getDistanceMatrix(requestWithHighways, (response, status) => {
+        console.log("Distance Matrix API ステータス (高速道路利用あり):", status);
+        
+        if (status === "OK") {
+            bothResults.withHighways = response;
+            
+            // 高速道路利用なしの計算
+            distanceMatrixService.getDistanceMatrix(requestWithoutHighways, (response2, status2) => {
+                console.log("Distance Matrix API ステータス (高速道路利用なし):", status2);
+                
+                if (status2 === "OK") {
+                    bothResults.withoutHighways = response2;
+                    processDrivingResults(bothResults, maxTime, hospitals);
+                } else {
+                    const resultsDiv = document.getElementById("results");
+                    resultsDiv.innerHTML = `<div class="no-results">距離計算中にエラーが発生しました。エラーコード: ${status2}</div>`;
+                }
+            });
+        } else {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = `<div class="no-results">距離計算中にエラーが発生しました。エラーコード: ${status}</div>`;
+        }
+    });
+}
+
+// 距離と時間の計算（高速道路利用区別なし）
 function calculateDistances(origin, destinations, mode, maxTime, hospitals) {
     const request = {
         origins: [origin],
@@ -224,10 +284,12 @@ function calculateDistances(origin, destinations, mode, maxTime, hospitals) {
         avoidTolls: false
     };
 
-    // 公共交通機関（TRANSIT）モードの場合、出発時刻を指定
+    // 公共交通機関（TRANSIT）モードの場合、設定を調整
     if (mode === 'TRANSIT') {
         request.transitOptions = {
-            departureTime: new Date() // 現在時刻を出発時刻として設定
+            departureTime: new Date(), // 現在時刻を出発時刻として設定
+            modes: ['BUS', 'RAIL', 'SUBWAY', 'TRAIN', 'TRAM'], // すべての公共交通機関タイプを含める
+            routingPreference: 'FEWER_TRANSFERS' // 乗り換え最小化
         };
     }
 
@@ -252,7 +314,80 @@ function calculateDistances(origin, destinations, mode, maxTime, hospitals) {
     });
 }
 
-// 結果の処理とフィルタリング
+// 車選択時の結果の処理とフィルタリング
+function processDrivingResults(bothResults, maxTime, hospitals) {
+    const results = document.getElementById("results");
+    results.innerHTML = "";
+
+    const maxTimeInSeconds = maxTime * 60;
+    let filteredHospitals = [];
+
+    // 高速道路利用ありのデータを処理
+    if (bothResults.withHighways && bothResults.withHighways.rows[0] && bothResults.withHighways.rows[0].elements) {
+        bothResults.withHighways.rows[0].elements.forEach((element, index) => {
+            if (element.status === "OK") {
+                // 対応する高速道路利用なしのデータを取得
+                const withoutHighwaysElement = bothResults.withoutHighways && 
+                                              bothResults.withoutHighways.rows[0] && 
+                                              bothResults.withoutHighways.rows[0].elements && 
+                                              bothResults.withoutHighways.rows[0].elements[index] && 
+                                              bothResults.withoutHighways.rows[0].elements[index].status === "OK" ? 
+                                              bothResults.withoutHighways.rows[0].elements[index] : null;
+
+                if (element.duration.value <= maxTimeInSeconds) {
+                    filteredHospitals.push({
+                        hospital: hospitals[index],
+                        durationWithHighways: element.duration.text,
+                        durationWithHighwaysValue: element.duration.value,
+                        durationWithoutHighways: withoutHighwaysElement ? withoutHighwaysElement.duration.text : "不明",
+                        durationWithoutHighwaysValue: withoutHighwaysElement ? withoutHighwaysElement.duration.value : Infinity
+                    });
+                }
+            }
+        });
+    }
+
+    // 時間順にソート（高速道路利用ありの時間でソート）
+    filteredHospitals.sort((a, b) => a.durationWithHighwaysValue - b.durationWithHighwaysValue);
+
+    if (filteredHospitals.length > 0) {
+        filteredHospitals.forEach(item => {
+            const hospitalElement = document.createElement("div");
+            hospitalElement.className = "hospital-item";
+            hospitalElement.innerHTML = `
+                <div class="hospital-name">${item.hospital.name}</div>
+                <div class="hospital-address">${item.hospital.address}</div>
+                <div class="hospital-time">
+                    <div>所要時間（高速道路あり）: ${item.durationWithHighways}</div>
+                    <div>所要時間（高速道路なし）: ${item.durationWithoutHighways}</div>
+                </div>
+            `;
+
+            hospitalElement.addEventListener("click", () => {
+                map.setCenter({ lat: item.hospital.lat, lng: item.hospital.lng });
+                map.setZoom(15);
+                const content = `
+                    <div class="info-window">
+                        <h3>${item.hospital.name}</h3>
+                        <p><strong>診療科:</strong> ${item.hospital.specialties}</p>
+                        <p><strong>住所:</strong> ${item.hospital.address}</p>
+                        <p><strong>所要時間（高速道路あり）:</strong> ${item.durationWithHighways}</p>
+                        <p><strong>所要時間（高速道路なし）:</strong> ${item.durationWithoutHighways}</p>
+                    </div>
+                `;
+                infoWindow.setContent(content);
+                infoWindow.setPosition({ lat: item.hospital.lat, lng: item.hospital.lng });
+                infoWindow.open(map);
+            });
+
+            results.appendChild(hospitalElement);
+        });
+    } else {
+        results.innerHTML = '<div class="no-results">該当する病院が見つかりませんでした。</div>';
+    }
+}
+
+// 結果の処理とフィルタリング（車以外のモード）
 function processResults(response, maxTime, hospitals) {
     const results = document.getElementById("results");
     results.innerHTML = "";
