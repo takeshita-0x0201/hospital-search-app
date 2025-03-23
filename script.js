@@ -215,14 +215,24 @@ async function searchHospitals(hospitals) {
 
 // 距離と時間の計算
 function calculateDistances(origin, destinations, mode, maxTime, hospitals) {
-    distanceMatrixService.getDistanceMatrix({
+    const request = {
         origins: [origin],
         destinations: destinations,
         travelMode: google.maps.TravelMode[mode],
         unitSystem: google.maps.UnitSystem.METRIC,
         avoidHighways: false,
         avoidTolls: false
-    }, (response, status) => {
+    };
+
+    // 公共交通機関（TRANSIT）モードの場合、出発時刻を指定
+    if (mode === 'TRANSIT') {
+        request.transitOptions = {
+            departureTime: new Date() // 現在時刻を出発時刻として設定
+        };
+    }
+
+    distanceMatrixService.getDistanceMatrix(request, (response, status) => {
+        console.log("Distance Matrix API レスポンス:", response); // デバッグ用ログ
         if (status !== "OK") {
             const resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = '<div class="no-results">距離計算中にエラーが発生しました。後でもう一度お試しください。</div>';
