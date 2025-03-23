@@ -225,6 +225,12 @@ h3 {
 }
 
 /* 診療科選択 */
+.specialty-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .specialty-tags {
     display: flex;
     flex-wrap: wrap;
