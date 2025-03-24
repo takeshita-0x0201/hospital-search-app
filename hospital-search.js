@@ -2,6 +2,7 @@
  * 病院検索システム
  * 
  * 動的な地点からの病院検索と診療科フィルタリングを提供するシステム
+ * 地理的インデックスによる高速検索対応版
  */
 
 // グローバル変数
@@ -19,6 +20,7 @@ let hospitals = [];
 let currentSearchOrigin = null;
 let displayedHospitals = 0;
 const BATCH_DISPLAY_COUNT = 20;
+let spatialIndex; // 地理的インデックス用の変数を追加
 
 // スプレッドシート設定
 const SPREADSHEET_ID = '1IcTnDh4UiHKBUqzfEWOW4f95bta9rv2QSv2IltdXwLk';
@@ -32,6 +34,9 @@ const DISTANCE_FACTOR = {
     'WALKING': 1.3,
     'BICYCLING': 1.5
 };
+
+// 地理的インデックスのグリッドサイズ（度単位、約5kmに相当）
+const GRID_SIZE = 0.05;
 
 // マップ初期化
 async function initMap() {
@@ -138,6 +143,87 @@ function initFullscreenMap() {
     });
 }
 
+// 地理的インデックスの作成
+function createSpatialIndex(hospitals, gridSize) {
+    console.log(`地理的インデックスを構築中... (${hospitals.length}件のデータ)`);
+    const startTime = performance.now();
+    
+    // グリッドベースのインデックスを作成
+    const index = {};
+    
+    hospitals.forEach(hospital => {
+        // 緯度・経度をグリッドセルのキーに変換
+        const cellX = Math.floor(hospital.lng / gridSize);
+        const cellY = Math.floor(hospital.lat / gridSize);
+        const cellKey = `${cellX},${cellY}`;
+        
+        // グリッドセルに病院を追加
+        if (!index[cellKey]) {
+            index[cellKey] = [];
+        }
+        index[cellKey].push(hospital);
+    });
+    
+    const endTime = performance.now();
+    console.log(`地理的インデックス構築完了: ${Object.keys(index).length}セル, ${(endTime - startTime).toFixed(2)}ms`);
+    
+    // インデックスを使った検索メソッドを含むオブジェクトを返す
+    return {
+        // 指定した地点から指定距離内の病院を検索
+        findNearby: function(lat, lng, radiusKm) {
+            const results = [];
+            
+            // 検索範囲のグリッドセルを計算
+            // 1度は約111kmなので、グリッドサイズに基づいて計算
+            const cellRadius = Math.ceil(radiusKm / (111 * gridSize)) + 1;
+            const centerX = Math.floor(lng / gridSize);
+            const centerY = Math.floor(lat / gridSize);
+            
+            // 検索範囲内のすべてのセルを調査
+            for (let x = centerX - cellRadius; x <= centerX + cellRadius; x++) {
+                for (let y = centerY - cellRadius; y <= centerY + cellRadius; y++) {
+                    const cellKey = `${x},${y}`;
+                    
+                    // そのセルに病院があれば取得
+                    if (index[cellKey]) {
+                        index[cellKey].forEach(hospital => {
+                            // 実際の距離計算（ハーバーサイン公式）
+                            const distance = haversineDistance(
+                                lat, lng, 
+                                hospital.lat, hospital.lng
+                            );
+                            
+                            if (distance <= radiusKm) {
+                                results.push({
+                                    hospital: hospital,
+                                    distance: distance
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // 距離でソート
+            results.sort((a, b) => a.distance - b.distance);
+            return results;
+        },
+        
+        // インデックスの統計情報を取得
+        getStats: function() {
+            const cellCount = Object.keys(index).length;
+            const emptyCells = Object.values(index).filter(cell => cell.length === 0).length;
+            const maxHospitalsInCell = Math.max(...Object.values(index).map(cell => cell.length));
+            
+            return {
+                cellCount,
+                emptyCells,
+                maxHospitalsInCell
+            };
+        }
+    };
+}
+
 // 病院データをスプレッドシートから取得
 async function fetchHospitals() {
     showLoading('病院データを読み込み中...');
@@ -179,6 +265,13 @@ async function fetchHospitals() {
             
             updateLoadingProgress(`データ処理完了: ${validCount}件の有効データを読み込みました`);
             console.log(`病院データ読み込み完了: 有効 ${validCount}件, 無効 ${invalidCount}件`);
+            
+            // 地理的インデックスの構築
+            updateLoadingProgress('地理的インデックスを構築中...');
+            spatialIndex = createSpatialIndex(hospitals, GRID_SIZE);
+            
+            const indexStats = spatialIndex.getStats();
+            console.log(`地理的インデックス: ${indexStats.cellCount}セル, 最大${indexStats.maxHospitalsInCell}件/セル`);
             
             return hospitals;
         } else {
@@ -532,39 +625,65 @@ async function performSearch() {
         const speed = getEstimatedSpeed(mode);
         const maxDistanceKm = (maxTime / 60) * speed * DISTANCE_FACTOR[mode];
         
-        // 直線距離でのフィルタリング
+        // 地理的インデックスでの高速フィルタリング
         updateLoadingProgress('候補となる病院をフィルタリング中...');
         console.log(`最大到達時間 ${maxTime}分 (${mode}) から推定距離 ${maxDistanceKm.toFixed(1)}km で絞り込み`);
         
-        const nearbyHospitals = filterHospitalsByDistance(hospitals, origin, maxDistanceKm);
-        console.log(`直線距離フィルタリング結果: ${nearbyHospitals.length}件`);
+        const startTime = performance.now();
+        const candidateResults = spatialIndex.findNearby(
+            origin.lat(), origin.lng(), maxDistanceKm
+        );
+        const endTime = performance.now();
         
-        if (nearbyHospitals.length === 0) {
+        console.log(`地理的インデックスによるフィルタリング: ${candidateResults.length}件 (${(endTime - startTime).toFixed(2)}ms)`);
+        
+        if (candidateResults.length === 0) {
             showNoResults('指定した条件に合う病院が見つかりませんでした');
             hideLoading();
             return;
         }
         
+        // 病院オブジェクトのみ抽出
+        const nearbyHospitals = candidateResults.map(item => item.hospital);
+        
+        // 診療科によるフィルタリング（APIコールの前に先に行う）
+        let filteredHospitals = nearbyHospitals;
+        if (selectedSpecialties.length > 0) {
+            updateLoadingProgress('診療科でフィルタリング中...');
+            filteredHospitals = filterHospitalsBySpecialties(nearbyHospitals, selectedSpecialties, specialtyFilterMode);
+            console.log(`診療科フィルタリング結果: ${filteredHospitals.length}件`);
+            
+            if (filteredHospitals.length === 0) {
+                showNoResults('指定した条件に合う病院が見つかりませんでした');
+                hideLoading();
+                return;
+            }
+        }
+        
+        // 最大API呼び出し数の制限（APIコスト削減のため）
+        const MAX_API_CALLS = 200; // 適切な数値に調整可能
+        let hospitalsForApiCall = filteredHospitals;
+        
+        if (filteredHospitals.length > MAX_API_CALLS) {
+            updateLoadingProgress(`API呼び出し数を制限するため、最も近い${MAX_API_CALLS}件のみ処理します`);
+            // すでに距離順にソートされているので、先頭からMAX_API_CALLS件を取得
+            hospitalsForApiCall = filteredHospitals.slice(0, MAX_API_CALLS);
+            console.log(`API呼び出し数制限: ${filteredHospitals.length}件から${hospitalsForApiCall.length}件に制限`);
+        }
+        
         // Google API で実際の所要時間を計算
-        updateLoadingProgress(`${nearbyHospitals.length}件の病院について所要時間を計算中...`);
+        updateLoadingProgress(`${hospitalsForApiCall.length}件の病院について所要時間を計算中...`);
         
         let results;
         if (mode === 'DRIVING') {
-            results = await calculateDrivingDistances(origin, nearbyHospitals, maxTime);
+            results = await calculateDrivingDistances(origin, hospitalsForApiCall, maxTime);
         } else if (mode === 'TRANSIT') {
-            results = await calculateTransitDistances(origin, nearbyHospitals, maxTime);
+            results = await calculateTransitDistances(origin, hospitalsForApiCall, maxTime);
         } else {
-            results = await calculateDistances(origin, nearbyHospitals, mode, maxTime);
+            results = await calculateDistances(origin, hospitalsForApiCall, mode, maxTime);
         }
         
         console.log(`所要時間計算結果: ${results.length}件`);
-        
-        // 診療科によるフィルタリング
-        if (selectedSpecialties.length > 0) {
-            updateLoadingProgress('診療科でフィルタリング中...');
-            results = filterBySpecialties(results, selectedSpecialties, specialtyFilterMode);
-            console.log(`診療科フィルタリング結果: ${results.length}件`);
-        }
         
         // 結果がない場合
         if (results.length === 0) {
@@ -649,6 +768,29 @@ function filterHospitalsByDistance(hospitals, origin, maxDistanceKm) {
         );
         
         return distance <= maxDistanceKm;
+    });
+}
+
+// 診療科による病院のフィルタリング（病院オブジェクト用）
+function filterHospitalsBySpecialties(hospitals, selectedSpecialties, filterMode) {
+    if (selectedSpecialties.length === 0) {
+        return hospitals;
+    }
+    
+    return hospitals.filter(hospital => {
+        const hospitalSpecialties = hospital.specialties;
+        
+        if (filterMode === 'AND') {
+            // すべての選択診療科を含む病院（AND）
+            return selectedSpecialties.every(specialty => {
+                return hospitalSpecialties.includes(specialty);
+            });
+        } else {
+            // いずれかの選択診療科を含む病院（OR）
+            return selectedSpecialties.some(specialty => {
+                return hospitalSpecialties.includes(specialty);
+            });
+        }
     });
 }
 
