@@ -54,49 +54,117 @@ async function initMap() {
         // ローディングインジケータを表示
         showLoading('Google Maps を読み込み中...');
         
-        // Google Maps APIライブラリの読み込み
-        const { Map } = await google.maps.importLibrary("maps");
-        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-        
-        // マップの初期化（東京中心）
-        map = new Map(document.getElementById('map'), {
-            center: { lat: 35.681236, lng: 139.767125 },
-            zoom: 12,
-            mapId: "DEMO_MAP_ID"
-        });
-        
-        // 情報ウィンドウの初期化
-        infoWindow = new google.maps.InfoWindow();
-        
-        // Geocoderの初期化
-        geocoder = new google.maps.Geocoder();
-        
-        // Distance Matrix APIの初期化
-        distanceMatrixService = new google.maps.DistanceMatrixService();
-        
-        // Directions APIの初期化
-        directionsService = new google.maps.DirectionsService();
-        
-        // 住所オートコンプリートの設定
-        setupAutocomplete();
-        
-        // 病院データの取得
-        await fetchHospitals();
-        
-        // イベントリスナーの設定
-        setupEventListeners();
-        
-        // 診療科選択UIの初期化
-        initializeSpecialtyUI();
+        try {
+            // Google Maps APIライブラリの読み込み
+            const { Map } = await google.maps.importLibrary("maps");
+            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+            
+            // マップの初期化（東京中心）
+            map = new Map(document.getElementById('map'), {
+                center: { lat: 35.681236, lng: 139.767125 },
+                zoom: 12,
+                mapId: "DEMO_MAP_ID"
+            });
+            
+            // 情報ウィンドウの初期化
+            infoWindow = new google.maps.InfoWindow();
+            
+            // Geocoderの初期化
+            geocoder = new google.maps.Geocoder();
+            
+            // Distance Matrix APIの初期化
+            distanceMatrixService = new google.maps.DistanceMatrixService();
+            
+            // Directions APIの初期化
+            directionsService = new google.maps.DirectionsService();
+            
+            // Places APIへのアクセス確認
+            try {
+                await new Promise((resolve, reject) => {
+                    // APIキーの有効性をテスト
+                    const placesService = new google.maps.places.PlacesService(map);
+                    placesService.findPlaceFromQuery({
+                        query: '東京駅',
+                        fields: ['name']
+                    }, (results, status) => {
+                        if (status === google.maps.places.PlacesServiceStatus.OK || 
+                            status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                            resolve();
+                        } else {
+                            console.warn('Places APIテスト失敗:', status);
+                            // 失敗してもクリティカルエラーとしない
+                            resolve();
+                        }
+                    });
+                });
+                
+                // 住所オートコンプリートの設定
+                setupAutocomplete();
+            } catch (placesError) {
+                console.warn('Places API初期化エラー:', placesError);
+                // Places APIが失敗しても処理を継続
+            }
+            
+            // 病院データの取得
+            await fetchHospitals();
+            
+            // イベントリスナーの設定
+            setupEventListeners();
+            
+            // 診療科選択UIの初期化
+            initializeSpecialtyUI();
+            
+            console.log('マップが正常に初期化されました');
+        } catch (mapsError) {
+            console.error('Google Maps API初期化エラー:', mapsError);
+            
+            // フォールバック：マップが読み込めない場合の処理
+            document.getElementById("map").innerHTML = `
+                <div class="map-error">
+                    <div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div>Google Mapsの読み込みに失敗しました。<br>APIキーの設定を確認してください。</div>
+                    <button onclick="location.reload()" class="retry-button">再試行</button>
+                </div>
+            `;
+            
+            // APIキーなしでも病院データだけは取得
+            try {
+                await fetchHospitals();
+                // イベントリスナーの一部だけ設定
+                setupBasicEventListeners();
+            } catch (dataError) {
+                console.error('データ取得エラー:', dataError);
+            }
+            
+            showError('Google Mapsの読み込みに失敗しました。APIキーを確認してください。');
+        }
         
         // ローディングインジケータを非表示
         hideLoading();
         
-        console.log('マップが正常に初期化されました');
     } catch (error) {
-        console.error('マップの初期化中にエラーが発生しました:', error);
+        console.error('アプリケーション初期化中に致命的エラー:', error);
         hideLoading();
-        showError('マップの読み込みに失敗しました。ページを再読み込みしてください。');
+        showError('アプリケーションの初期化に失敗しました。ページを再読み込みしてください。');
+    }
+}
+
+// 基本的なイベントリスナー（マップなしでも動作する最小限の機能）
+function setupBasicEventListeners() {
+    // リセットボタン
+    document.getElementById('resetButton')?.addEventListener('click', () => {
+        document.getElementById('searchForm')?.reset();
+        clearResults();
+        document.getElementById('selectedSpecialties').innerHTML = '';
+        currentSearchParams = null;
+    });
+    
+    // ソート機能
+    const sortResults = document.getElementById('sortResults');
+    if (sortResults) {
+        sortResults.addEventListener('change', function() {
+            sortSearchResults(this.value);
+        });
     }
 }
 
@@ -244,6 +312,17 @@ async function fetchHospitals() {
             const rowCount = data.values.length;
             updateLoadingProgress(`${rowCount}件のデータを処理中...`);
             
+            // データの構造確認（最初の数行を表示）
+            console.log("スプレッドシートデータのサンプル（先頭5行）:");
+            for (let i = 0; i < Math.min(5, data.values.length); i++) {
+                console.log(`行 ${i+1}:`, data.values[i]);
+            }
+            
+            // 列のヘッダーがある場合は確認
+            if (data.values[0] && data.values[0].length > 0) {
+                console.log("列ヘッダー:", data.values[0]);
+            }
+            
             // データ処理
             let validCount = 0;
             let invalidCount = 0;
@@ -263,15 +342,33 @@ async function fetchHospitals() {
             validCount = hospitals.length;
             invalidCount = data.values.length - validCount;
             
-            updateLoadingProgress(`データ処理完了: ${validCount}件の有効データを読み込みました`);
-            console.log(`病院データ読み込み完了: 有効 ${validCount}件, 無効 ${invalidCount}件`);
-            
-            // 地理的インデックスの構築
-            updateLoadingProgress('地理的インデックスを構築中...');
-            spatialIndex = createSpatialIndex(hospitals, GRID_SIZE);
-            
-            const indexStats = spatialIndex.getStats();
-            console.log(`地理的インデックス: ${indexStats.cellCount}セル, 最大${indexStats.maxHospitalsInCell}件/セル`);
+            if (validCount === 0) {
+                console.error("警告: 有効なデータが0件です。データ形式が期待と異なる可能性があります。");
+                // デバッグ情報の追加
+                const dataStructureInfo = `
+                    データ行数: ${data.values.length}
+                    先頭行の列数: ${data.values[0] ? data.values[0].length : 0}
+                    RANGE設定: ${RANGE}
+                `;
+                console.log("データ構造情報:", dataStructureInfo);
+                
+                // ユーザーにエラーを表示
+                showError('病院データの形式に問題があります。データが正しく読み込めませんでした。');
+                
+                // 開発者向けにアラート
+                alert('開発者向け: 病院データ形式に問題があります。コンソールログを確認してください。');
+                
+            } else {
+                updateLoadingProgress(`データ処理完了: ${validCount}件の有効データを読み込みました`);
+                console.log(`病院データ読み込み完了: 有効 ${validCount}件, 無効 ${invalidCount}件`);
+                
+                // 地理的インデックスの構築（有効データがある場合のみ）
+                updateLoadingProgress('地理的インデックスを構築中...');
+                spatialIndex = createSpatialIndex(hospitals, GRID_SIZE);
+                
+                const indexStats = spatialIndex.getStats();
+                console.log(`地理的インデックス: ${indexStats.cellCount}セル, 最大${indexStats.maxHospitalsInCell}件/セル`);
+            }
             
             return hospitals;
         } else {
@@ -290,54 +387,147 @@ async function fetchHospitals() {
 
 // データのバッチ処理
 async function processBatch(values, start, end) {
+    // デバッグ用：最初の行のデータ構造を確認
+    if (start === 0) {
+        console.log("スプレッドシートのデータ構造（先頭行）:", values[0]);
+    }
+    
+    let validCount = 0;
+    let invalidCount = 0;
+    
     for (let i = start; i < end; i++) {
         const row = values[i];
         
-        // データ形式の検証
-        if (row.length < 5) continue;
-        
-        const lat = parseFloat(row[3]); // 緯度（F列）
-        const lng = parseFloat(row[4]); // 経度（G列）
-        
-        if (isNaN(lat) || isNaN(lng)) {
-            continue;
+        try {
+            // データの最小長チェック（病院名、住所、緯度、経度が必要）
+            if (row.length < 3) {
+                invalidCount++;
+                continue;
+            }
+            
+            // データのインデックスに関するリマップ
+            // インデックスが確実にわからない場合は、元のCSVを分析して正しいインデックスを特定する必要があります
+            const nameIdx = 0;  // 病院名（A列）
+            const specialtyIdx = 1; // 診療科（B列）
+            const addressIdx = 2; // 住所（C列）
+            
+            // D列、E列などが必ずしも3,4インデックスとは限らないため慎重に確認
+            // 列名を見て、適切なインデックスを特定するロジックが必要かもしれません
+            const latIdx = 3;  // 緯度（D列）- 再確認が必要
+            const lngIdx = 4;  // 経度（E列）- 再確認が必要
+            
+            // データの有無を確認
+            if (!row[nameIdx] || !row[addressIdx]) {
+                invalidCount++;
+                continue;
+            }
+            
+            // 緯度・経度の解析（数値変換と検証）
+            const lat = parseFloat(String(row[latIdx]).replace(',', '.'));
+            const lng = parseFloat(String(row[lngIdx]).replace(',', '.'));
+            
+            // 緯度・経度の妥当性確認（日本の範囲内かどうかも確認）
+            if (isNaN(lat) || isNaN(lng) || 
+                lat < 20 || lat > 50 || // 日本の緯度範囲（おおよそ）
+                lng < 120 || lng > 150) { // 日本の経度範囲（おおよそ）
+                
+                console.warn(`無効な座標データ(行 ${i+2}): ${row[nameIdx]}, [${lat}, ${lng}]`);
+                invalidCount++;
+                continue;
+            }
+            
+            // 有効なデータを追加
+            hospitals.push({
+                name: row[nameIdx],
+                specialties: row[specialtyIdx] ? String(row[specialtyIdx]).split(',').map(s => s.trim()) : [],
+                address: row[addressIdx],
+                lat: lat,
+                lng: lng
+            });
+            
+            validCount++;
+            
+        } catch (error) {
+            console.error(`行 ${i+2} の処理中にエラー:`, error, row);
+            invalidCount++;
         }
-        
-        // 有効なデータを追加
-        hospitals.push({
-            name: row[0],
-            specialties: row[1] ? row[1].split(',').map(s => s.trim()) : [],
-            address: row[2],
-            lat: lat,
-            lng: lng
-        });
     }
+    
+    console.log(`バッチ処理完了: 有効 ${validCount}件, 無効 ${invalidCount}件`);
 }
 
 // 住所オートコンプリートの設定
 function setupAutocomplete() {
     const addressInput = document.getElementById('address');
-    autocomplete = new google.maps.places.Autocomplete(addressInput, {
-        componentRestrictions: { country: 'jp' },
-        fields: ['geometry', 'name', 'formatted_address']
-    });
+    if (!addressInput) return;
     
-    // 場所の選択時にマップを更新
-    autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        
-        if (!place.geometry) {
-            console.warn('選択された場所の詳細情報を取得できませんでした');
+    try {
+        // Autocompleteが使用可能か確認
+        if (!google.maps.places || !google.maps.places.Autocomplete) {
+            console.warn('Places APIのAutoCompleteが利用できません');
             return;
         }
         
-        // マップをその場所にセンタリング
-        map.setCenter(place.geometry.location);
-        map.setZoom(15);
+        autocomplete = new google.maps.places.Autocomplete(addressInput, {
+            componentRestrictions: { country: 'jp' },
+            fields: ['geometry', 'name', 'formatted_address']
+        });
         
-        // 検索ではなく、単に場所を表示するためのマーカーを追加
-        clearMarkers();
-        addMarker(place.geometry.location, place.name || '選択した場所');
+        // エラーハンドリングを強化
+        autocomplete.addListener('place_changed', () => {
+            try {
+                const place = autocomplete.getPlace();
+                
+                if (!place.geometry) {
+                    console.warn('選択された場所の詳細情報を取得できませんでした');
+                    // 手動ジオコーディングを試行
+                    geocodeManually(place.name || addressInput.value);
+                    return;
+                }
+                
+                // マップをその場所にセンタリング
+                map.setCenter(place.geometry.location);
+                map.setZoom(15);
+                
+                // 検索ではなく、単に場所を表示するためのマーカーを追加
+                clearMarkers();
+                addMarker(place.geometry.location, place.name || '選択した場所');
+            } catch (error) {
+                console.error('場所の選択処理エラー:', error);
+                // 手動ジオコーディングを試行
+                geocodeManually(addressInput.value);
+            }
+        });
+    } catch (error) {
+        console.error('Autocomplete初期化エラー:', error);
+        // AutoCompleteが使えない場合は、単純な入力フィールドとして使用
+        addressInput.placeholder = '住所または駅名を入力（Enter で検索）';
+        
+        // エンターキーで検索を実行
+        addressInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch();
+            }
+        });
+    }
+}
+
+// 住所の手動ジオコーディング
+function geocodeManually(address) {
+    if (!address || !geocoder) return;
+    
+    geocoder.geocode({ address: address, region: 'jp' }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            // 成功した場合は結果を使用
+            map.setCenter(results[0].geometry.location);
+            map.setZoom(15);
+            
+            clearMarkers();
+            addMarker(results[0].geometry.location, address);
+        } else {
+            console.warn(`手動ジオコーディングエラー: ${status}`);
+        }
     });
 }
 
@@ -709,22 +899,95 @@ async function performSearch() {
 // 住所のジオコーディング（住所→緯度経度）
 async function geocodeAddress(address) {
     try {
-        const result = await new Promise((resolve, reject) => {
-            geocoder.geocode({ address, region: 'jp' }, (results, status) => {
-                if (status === 'OK' && results[0]) {
-                    resolve(results[0].geometry.location);
-                } else {
-                    reject(new Error(`ジオコーディングエラー: ${status}`));
-                }
-            });
-        });
+        // APIキーのエラーに対応したフェイルセーフ機構
+        if (!geocoder) {
+            throw new Error('Geocoderが初期化されていません');
+        }
         
-        return result;
+        // 一般的な東京の座標（APIエラー時のフォールバック）
+        const TOKYO_LOCATION = new google.maps.LatLng(35.681236, 139.767125);
+        
+        try {
+            const result = await new Promise((resolve, reject) => {
+                // タイムアウト設定
+                const timeoutId = setTimeout(() => {
+                    console.warn('ジオコーディングがタイムアウトしました');
+                    reject(new Error('ジオコーディングタイムアウト'));
+                }, 5000); // 5秒タイムアウト
+                
+                geocoder.geocode({ address, region: 'jp' }, (results, status) => {
+                    clearTimeout(timeoutId);
+                    
+                    if (status === 'OK' && results[0]) {
+                        resolve(results[0].geometry.location);
+                    } else {
+                        reject(new Error(`ジオコーディングエラー: ${status}`));
+                    }
+                });
+            });
+            
+            return result;
+        } catch (geocodeError) {
+            console.error('ジオコーディングAPI呼び出しエラー:', geocodeError);
+            
+            // バックアップ手段：一般的な住所/駅名のリストから検索
+            const commonLocation = findCommonLocation(address);
+            if (commonLocation) {
+                console.log(`一般的な場所で代替: ${address} → [${commonLocation.lat}, ${commonLocation.lng}]`);
+                return new google.maps.LatLng(commonLocation.lat, commonLocation.lng);
+            }
+            
+            // フォールバック：住所を処理できない場合は東京の中心を使用
+            showError('入力された住所を見つけられませんでした。一般的な場所で検索します。');
+            return TOKYO_LOCATION;
+        }
     } catch (error) {
         console.error('住所のジオコーディングに失敗しました:', error);
-        showError('入力された住所を見つけられませんでした。別の住所を試してください。');
+        showError('住所検索機能が現在利用できません。別の方法を試してください。');
         return null;
     }
+}
+
+// 一般的な場所の座標を探す補助関数（APIキーエラー時の代替手段）
+function findCommonLocation(searchText) {
+    // 主要都市の座標データ
+    const COMMON_LOCATIONS = [
+        { name: '東京', lat: 35.681236, lng: 139.767125 },
+        { name: '新宿', lat: 35.6938, lng: 139.7034 },
+        { name: '渋谷', lat: 35.6580, lng: 139.7016 },
+        { name: '池袋', lat: 35.7295, lng: 139.7109 },
+        { name: '上野', lat: 35.7141, lng: 139.7774 },
+        { name: '品川', lat: 35.6284, lng: 139.7387 },
+        { name: '横浜', lat: 35.4660, lng: 139.6222 },
+        { name: '大阪', lat: 34.6937, lng: 135.5022 },
+        { name: '名古屋', lat: 35.1815, lng: 136.9066 },
+        { name: '札幌', lat: 43.0618, lng: 141.3545 },
+        { name: '福岡', lat: 33.5902, lng: 130.4017 },
+        { name: '京都', lat: 35.0116, lng: 135.7680 },
+        { name: '神戸', lat: 34.6901, lng: 135.1955 },
+        { name: '仙台', lat: 38.2682, lng: 140.8694 },
+        { name: '広島', lat: 34.3853, lng: 132.4553 },
+        { name: '那覇', lat: 26.2124, lng: 127.6809 }
+    ];
+    
+    // 検索テキストを正規化（スペースや記号を削除し、小文字に変換）
+    const normalizedSearch = searchText.toLowerCase().replace(/[\s\-]/g, '');
+    
+    // 前方一致、部分一致の順で検索
+    for (const location of COMMON_LOCATIONS) {
+        if (normalizedSearch.startsWith(location.name)) {
+            return location;
+        }
+    }
+    
+    for (const location of COMMON_LOCATIONS) {
+        if (normalizedSearch.includes(location.name)) {
+            return location;
+        }
+    }
+    
+    // 一致する場所が見つからない場合はnull
+    return null;
 }
 
 // 交通手段別の推定速度（km/h）
@@ -892,24 +1155,81 @@ async function calculateTransitDistances(origin, hospitals, maxTime) {
     const results = [];
     
     // 計算対象を制限（APIコールを減らすため）
-    const MAX_TRANSIT_CALCULATIONS = 100;
+    const MAX_TRANSIT_CALCULATIONS = 50; // 制限を少なくして負荷軽減
     const targetHospitals = hospitals.length > MAX_TRANSIT_CALCULATIONS ? 
         hospitals.slice(0, MAX_TRANSIT_CALCULATIONS) : hospitals;
     
     console.log(`公共交通機関モードでの所要時間計算: ${targetHospitals.length}件を処理`);
     
+    // 失敗したリクエスト数をカウント
+    let failedRequests = 0;
+    const MAX_FAILURES = 5; // 連続失敗の最大許容数
+    
     // 各病院への経路を計算
     for (let i = 0; i < targetHospitals.length; i++) {
+        // 連続失敗が多すぎる場合は中断
+        if (failedRequests >= MAX_FAILURES) {
+            console.warn(`連続${MAX_FAILURES}回の失敗により公共交通機関の経路計算を中断します`);
+            showError(`公共交通機関の経路計算でエラーが多発しています。別の交通手段をお試しください。`);
+            break;
+        }
+        
         const hospital = targetHospitals[i];
         
         updateLoadingProgress(`公共交通機関での経路計算中... (${i + 1}/${targetHospitals.length}件)`);
         
         try {
             // Directions APIで詳細な経路情報を取得
-            const route = await calculateTransitRoute(
-                origin, 
-                { lat: hospital.lat, lng: hospital.lng }
-            );
+            // APIキーの問題または到達不能な場所の場合に備えてフォールバック
+            let route = await calculateTransitRoute(origin, { lat: hospital.lat, lng: hospital.lng });
+            
+            if (!route) {
+                // 公共交通機関で到達できない場合は徒歩での時間を計算
+                console.log(`病院 "${hospital.name}" への公共交通機関ルートが見つかりません。徒歩ルートを試行...`);
+                
+                // 徒歩で距離マトリックス計算
+                const walkingResponse = await new Promise((resolve) => {
+                    distanceMatrixService.getDistanceMatrix({
+                        origins: [origin],
+                        destinations: [{ lat: hospital.lat, lng: hospital.lng }],
+                        travelMode: 'WALKING',
+                        unitSystem: google.maps.UnitSystem.METRIC
+                    }, (response, status) => {
+                        if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                            resolve(response.rows[0].elements[0]);
+                        } else {
+                            resolve(null);
+                        }
+                    });
+                });
+                
+                if (walkingResponse) {
+                    // 徒歩ルートで代替データを作成
+                    route = {
+                        segments: [{
+                            type: 'WALKING',
+                            duration: walkingResponse.duration.text,
+                            durationValue: walkingResponse.duration.value,
+                            distance: walkingResponse.distance.text,
+                            distanceValue: walkingResponse.distance.value
+                        }],
+                        durationText: `徒歩${walkingResponse.duration.text}`,
+                        durationValue: walkingResponse.duration.value,
+                        distanceText: walkingResponse.distance.text,
+                        distanceValue: walkingResponse.distance.value,
+                        isWalkingFallback: true // フォールバックフラグ
+                    };
+                    
+                    failedRequests = 0; // 徒歩ルートが見つかったのでリセット
+                } else {
+                    // 徒歩でも失敗した場合
+                    failedRequests++;
+                    continue;
+                }
+            } else {
+                // 成功したらカウンタをリセット
+                failedRequests = 0;
+            }
             
             // 指定時間内なら結果に追加
             if (route && route.durationValue <= maxTimeInSeconds) {
@@ -917,12 +1237,14 @@ async function calculateTransitDistances(origin, hospitals, maxTime) {
                     hospital: hospital,
                     route: route,
                     distance: route.distanceText,
-                    duration: route.durationValue
+                    duration: route.durationValue,
+                    isWalkingFallback: route.isWalkingFallback || false
                 });
             }
             
         } catch (error) {
             console.error(`病院 ${i + 1}/${targetHospitals.length} の経路計算中にエラー:`, error);
+            failedRequests++;
             // エラーが発生しても他の病院の処理を継続
         }
         
@@ -940,69 +1262,80 @@ async function calculateTransitDistances(origin, hospitals, maxTime) {
 
 // 公共交通機関の詳細な経路情報を取得
 async function calculateTransitRoute(origin, destination) {
-    try {
-        const result = await new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+        const timeoutId = setTimeout(() => {
+            console.warn('公共交通機関の経路計算がタイムアウトしました');
+            resolve(null);
+        }, 10000); // 10秒タイムアウト
+        
+        try {
             directionsService.route({
                 origin: origin,
                 destination: destination,
                 travelMode: 'TRANSIT',
                 transitOptions: {
                     departureTime: new Date()
-                }
+                },
+                // 公共交通機関がない場合は徒歩のみも検討
+                provideRouteAlternatives: true
             }, (response, status) => {
+                clearTimeout(timeoutId);
+                
                 if (status === 'OK' && response.routes.length > 0) {
-                    resolve(response);
+                    try {
+                        // 最初のルートを使用
+                        const route = response.routes[0];
+                        const leg = route.legs[0];
+                        
+                        // 経路セグメントの解析
+                        const segments = [];
+                        
+                        leg.steps.forEach(step => {
+                            const duration = step.duration.value;
+                            const distance = step.distance.value;
+                            
+                            let segment = {
+                                type: step.travel_mode,
+                                duration: step.duration.text,
+                                durationValue: duration,
+                                distance: step.distance.text,
+                                distanceValue: distance
+                            };
+                            
+                            if (step.travel_mode === 'TRANSIT') {
+                                segment.line = step.transit?.line?.name || '不明な路線';
+                                segment.vehicle = step.transit?.line?.vehicle?.name || '電車/バス';
+                                segment.departureStop = step.transit?.departure_stop?.name || '出発停留所';
+                                segment.arrivalStop = step.transit?.arrival_stop?.name || '到着停留所';
+                                segment.numStops = step.transit?.num_stops || 0;
+                            }
+                            
+                            segments.push(segment);
+                        });
+                        
+                        // 結果をフォーマット
+                        resolve({
+                            segments: segments,
+                            durationText: leg.duration.text,
+                            durationValue: leg.duration.value,
+                            distanceText: leg.distance.text,
+                            distanceValue: leg.distance.value
+                        });
+                    } catch (parseError) {
+                        console.error('経路データの解析エラー:', parseError);
+                        resolve(null);
+                    }
                 } else {
-                    reject(new Error(`経路計算エラー: ${status}`));
+                    console.warn(`公共交通機関の経路計算エラー: ${status}`);
+                    resolve(null);
                 }
             });
-        });
-        
-        // 最初のルートを使用
-        const route = result.routes[0];
-        const leg = route.legs[0];
-        
-        // 経路セグメントの解析
-        const segments = [];
-        let segmentDurations = [];
-        
-        leg.steps.forEach(step => {
-            const duration = step.duration.value;
-            const distance = step.distance.value;
-            
-            let segment = {
-                type: step.travel_mode,
-                duration: step.duration.text,
-                durationValue: duration,
-                distance: step.distance.text,
-                distanceValue: distance
-            };
-            
-            if (step.travel_mode === 'TRANSIT') {
-                segment.line = step.transit?.line?.name || '不明な路線';
-                segment.vehicle = step.transit?.line?.vehicle?.name || '電車/バス';
-                segment.departureStop = step.transit?.departure_stop?.name || '出発停留所';
-                segment.arrivalStop = step.transit?.arrival_stop?.name || '到着停留所';
-                segment.numStops = step.transit?.num_stops || 0;
-            }
-            
-            segments.push(segment);
-            segmentDurations.push(duration);
-        });
-        
-        // 結果をフォーマット
-        return {
-            segments: segments,
-            durationText: leg.duration.text,
-            durationValue: leg.duration.value,
-            distanceText: leg.distance.text,
-            distanceValue: leg.distance.value
-        };
-        
-    } catch (error) {
-        console.warn('公共交通機関の経路計算に失敗:', error);
-        return null;
-    }
+        } catch (error) {
+            clearTimeout(timeoutId);
+            console.error('公共交通機関の経路計算リクエストエラー:', error);
+            resolve(null);
+        }
+    });
 }
 
 // 徒歩・自転車での所要時間計算
@@ -1328,41 +1661,63 @@ function addHospitalToResults(result, index, searchParams) {
         
         hospitalItem.querySelector('.hospital-route').innerHTML = routeInfo;
     } else if (mode === 'TRANSIT') {
-        // 公共交通機関の経路表示
-        distanceBadge.textContent = `${result.route.durationText}`;
+        // 公共交通機関の経路表示（徒歩フォールバックの場合も含む）
+        const isWalkingFallback = result.isWalkingFallback;
         
-        // 各セグメントの表示
-        const segments = result.route.segments || [];
-        let routeInfo = '<div class="transit-route">';
-        
-        if (segments.length > 0) {
-            segments.forEach((segment, i) => {
-                if (i > 0) {
-                    routeInfo += '<span class="route-arrow">→</span>';
-                }
-                
-                if (segment.type === 'WALKING') {
-                    routeInfo += `<span class="route-segment">
-                        <i class="fas fa-walking transport-icon"></i> 徒歩${segment.duration}
-                    </span>`;
-                } else if (segment.type === 'TRANSIT') {
-                    routeInfo += `<span class="route-segment">
-                        <i class="fas fa-subway transport-icon"></i> ${segment.line}(${segment.departureStop}→${segment.arrivalStop})${segment.duration}
-                    </span>`;
-                }
-            });
+        if (isWalkingFallback) {
+            // 徒歩でのフォールバック表示
+            distanceBadge.textContent = `${result.route.durationText}`;
+            distanceBadge.classList.add('fallback-badge');
             
-            routeInfo += `<br><span class="route-total">合計: ${result.route.durationText}</span>`;
-        } else {
-            routeInfo += `
-                <span class="route-segment">
-                    <i class="fas fa-subway transport-icon"></i> 公共交通機関 ${result.route.durationText}
-                </span>
+            const routeInfo = `
+                <div class="transit-route fallback-route">
+                    <div class="fallback-notice">
+                        <i class="fas fa-info-circle"></i> 公共交通機関の経路が見つからないため、徒歩ルートを表示しています
+                    </div>
+                    <span class="route-segment">
+                        <i class="fas fa-walking transport-icon"></i> 徒歩: ${result.route.durationText} (${result.distance})
+                    </span>
+                </div>
             `;
+            
+            hospitalItem.querySelector('.hospital-route').innerHTML = routeInfo;
+        } else {
+            // 通常の公共交通機関表示
+            distanceBadge.textContent = `${result.route.durationText}`;
+            
+            // 各セグメントの表示
+            const segments = result.route.segments || [];
+            let routeInfo = '<div class="transit-route">';
+            
+            if (segments.length > 0) {
+                segments.forEach((segment, i) => {
+                    if (i > 0) {
+                        routeInfo += '<span class="route-arrow">→</span>';
+                    }
+                    
+                    if (segment.type === 'WALKING') {
+                        routeInfo += `<span class="route-segment">
+                            <i class="fas fa-walking transport-icon"></i> 徒歩${segment.duration}
+                        </span>`;
+                    } else if (segment.type === 'TRANSIT') {
+                        routeInfo += `<span class="route-segment">
+                            <i class="fas fa-subway transport-icon"></i> ${segment.line}(${segment.departureStop}→${segment.arrivalStop})${segment.duration}
+                        </span>`;
+                    }
+                });
+                
+                routeInfo += `<br><span class="route-total">合計: ${result.route.durationText}</span>`;
+            } else {
+                routeInfo += `
+                    <span class="route-segment">
+                        <i class="fas fa-subway transport-icon"></i> 公共交通機関 ${result.route.durationText}
+                    </span>
+                `;
+            }
+            
+            routeInfo += '</div>';
+            hospitalItem.querySelector('.hospital-route').innerHTML = routeInfo;
         }
-        
-        routeInfo += '</div>';
-        hospitalItem.querySelector('.hospital-route').innerHTML = routeInfo;
     } else if (mode === 'WALKING') {
         distanceBadge.textContent = `徒歩${result.route.durationText}`;
         
