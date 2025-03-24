@@ -296,8 +296,8 @@ async function processBatch(values, start, end) {
         // データ形式の検証
         if (row.length < 5) continue;
         
-        const lat = parseFloat(row[4]); // 緯度（F列）
-        const lng = parseFloat(row[5]); // 経度（G列）
+        const lat = parseFloat(row[5]); // 緯度（F列）
+        const lng = parseFloat(row[6]); // 経度（G列）
         
         if (isNaN(lat) || isNaN(lng)) {
             continue;
